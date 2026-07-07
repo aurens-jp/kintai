@@ -30,6 +30,13 @@ body{font-family:'Segoe UI',Meiryo,sans-serif;background:var(--bg);color:var(--t
 .sidebar-user strong{display:block;color:#fff;font-size:13px}
 .btn-logout{margin-top:8px;width:100%;padding:8px;background:rgba(255,255,255,.08);border:none;border-radius:6px;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer}
 .btn-logout:hover{background:rgba(255,255,255,.14);color:#fff}
+/* ── Mode Switch (勤怠/人事労務) ── */
+.mode-switch{display:flex;gap:4px;margin:10px 12px 8px;background:rgba(255,255,255,.06);border-radius:8px;padding:3px}
+.mode-btn{flex:1;text-align:center;padding:7px 4px;border-radius:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,.55);cursor:pointer;transition:.15s;user-select:none}
+.mode-btn:hover{color:#fff}
+.mode-btn.active{background:var(--blue);color:#fff}
+#sidebarLogoMain{display:block;font-size:15px;font-weight:700;color:#fff}
+.hr-banner{border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px}
 
 /* ── Main ── */
 .main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
@@ -213,7 +220,9 @@ tr:hover td{background:#fafafa}
 <div id="app" style="display:none;width:100%">
 <!-- Sidebar -->
 <div class="sidebar">
-  <div class="sidebar-logo">🕐 勤怠管理<span>管理者ポータル</span></div>
+  <div class="sidebar-logo" id="sidebarLogo"><span id="sidebarLogoMain">🕐 勤怠管理</span><span id="sidebarLogoSub">管理者ポータル</span></div>
+  <div class="mode-switch"><div class="mode-btn active" id="modeBtnKintai" onclick="switchMode('kintai')">🕐 勤怠管理</div><div class="mode-btn" id="modeBtnHr" onclick="switchMode('hr')">🧑‍💼 人事労務</div></div>
+  <div id="navKintai">
   <div class="sidebar-section">メインメニュー</div>
   <div class="nav-item active" onclick="nav('dashboard')"><span class="icon">📊</span>ダッシュボード</div>
   <div class="nav-item" onclick="nav('punch')"><span class="icon">👊</span>打刻</div>
@@ -235,6 +244,27 @@ tr:hover td{background:#fafafa}
   <div class="nav-item" onclick="nav('face')"><span class="icon">📸</span>顔登録管理</div>
   <div class="sidebar-section">その他</div>
   <div class="nav-item" onclick="window.open('calendar_system.html','_blank')"><span class="icon">📅</span>変形時間カレンダー</div>
+</div><!-- /navKintai -->
+<div id="navHr" style="display:none">
+  <div class="sidebar-section">メインメニュー</div>
+  <div class="nav-item" onclick="nav('hr-dashboard')"><span class="icon">📊</span>ダッシュボード</div>
+  <div class="nav-item" onclick="nav('hr-employees')"><span class="icon">👤</span>従業員情報</div>
+  <div class="nav-item" onclick="nav('hr-onboarding')"><span class="icon">📝</span>入社手続き</div>
+  <div class="nav-item" onclick="nav('hr-requests')"><span class="icon">📮</span>従業員申請</div>
+  <div class="sidebar-section">給与・法定</div>
+  <div class="nav-item" onclick="nav('hr-payslip')"><span class="icon">💴</span>Web給与明細</div>
+  <div class="nav-item" onclick="nav('hr-mynumber')"><span class="icon">🔢</span>マイナンバー管理</div>
+  <div class="nav-item" onclick="nav('hr-egov')"><span class="icon">📤</span>e-Gov電子申請</div>
+  <div class="sidebar-section">管理設定</div>
+  <div class="nav-item" onclick="nav('hr-permissions')"><span class="icon">🔐</span>権限管理</div>
+  <div class="nav-item" onclick="nav('hr-departments')"><span class="icon">🏢</span>部門管理</div>
+  <div class="nav-item" onclick="nav('hr-custom')"><span class="icon">🛠️</span>カスタム項目設定</div>
+  <div class="sidebar-section">システム</div>
+  <div class="nav-item" onclick="nav('hr-notify')"><span class="icon">🔔</span>通知設定</div>
+  <div class="nav-item" onclick="nav('hr-files')"><span class="icon">📁</span>ファイル管理</div>
+  <div class="nav-item" onclick="nav('hr-csv')"><span class="icon">📥</span>CSV連携</div>
+  <div class="nav-item" onclick="nav('hr-history')"><span class="icon">🕓</span>履歴・操作ログ</div>
+</div><!-- /navHr -->
   <div class="sidebar-bottom">
     <div class="sidebar-user"><strong id="sidebarName">管理者</strong><span id="sidebarDept"></span></div>
     <button class="btn-logout" onclick="doLogout()">ログアウト</button>
@@ -1508,6 +1538,437 @@ tr:hover td{background:#fafafa}
 
 </div>
 
+
+<!-- ══════════════════════════════════════════════
+     人事労務Webシステム（イメージ確認用モックアップ）
+     ※ Supabase等バックエンド連携なし・ダミーデータのみ
+════════════════════════════════════════════════ -->
+
+<!-- ── 人事労務ダッシュボード ── -->
+<div class="page" id="page-hr-dashboard">
+  <div class="hr-banner" style="background:var(--lblue);border:1px solid #bfdcf5;color:var(--blue)">
+    🧑‍💼 人事労務システム（イメージ確認用モックアップ）｜このモードの画面はすべてダミーデータです。従業員マスターは勤怠管理システムと共通（職員IDで同期）です。
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">在籍従業員数</div><div class="kpi-val" style="color:var(--blue)">8</div><div class="kpi-sub">勤怠マスターと同期</div></div>
+    <div class="kpi"><div class="kpi-label">入社予定</div><div class="kpi-val" style="color:var(--green)">2</div><div class="kpi-sub">今月〜来月</div></div>
+    <div class="kpi"><div class="kpi-label">提出待ち書類</div><div class="kpi-val" style="color:var(--amber)">3</div><div class="kpi-sub">入社手続き・従業員申請</div></div>
+    <div class="kpi"><div class="kpi-label">未承認申請</div><div class="kpi-val" style="color:var(--red)">4</div><div class="kpi-sub">住所変更・扶養など</div></div>
+    <div class="kpi"><div class="kpi-label">給与明細 未公開</div><div class="kpi-val">1</div><div class="kpi-sub">2026年7月分</div></div>
+    <div class="kpi"><div class="kpi-label">契約更新間近</div><div class="kpi-val" style="color:var(--amber)">1</div><div class="kpi-sub">30日以内</div></div>
+    <div class="kpi"><div class="kpi-label">資格・免許期限</div><div class="kpi-val" style="color:var(--amber)">2</div><div class="kpi-sub">90日以内</div></div>
+    <div class="kpi"><div class="kpi-label">e-Gov処理中</div><div class="kpi-val" style="color:var(--purple)">2</div><div class="kpi-sub">届出作成・送信待ち</div></div>
+  </div>
+  <div class="dash-2col">
+    <div class="dash-col">
+      <div class="card">
+        <div class="card-title">📝 入社手続き 進行状況</div>
+        <table>
+          <thead><tr><th>氏名</th><th>入社予定日</th><th>進捗</th><th>状況</th></tr></thead>
+          <tbody>
+            <tr><td>高橋 陸</td><td>2026-07-15</td><td>⑤書類アップロード</td><td><span class="badge badge-amber">提出待ち</span></td></tr>
+            <tr><td>渡辺 美咲</td><td>2026-08-01</td><td>②招待メール送信済</td><td><span class="badge badge-blue">本人入力待ち</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">📮 従業員申請（未処理）</div>
+        <table>
+          <thead><tr><th>申請者</th><th>種類</th><th>申請日</th></tr></thead>
+          <tbody>
+            <tr><td>佐藤 花子</td><td>住所変更</td><td>2026-07-05</td></tr>
+            <tr><td>鈴木 一郎</td><td>扶養追加</td><td>2026-07-04</td></tr>
+            <tr><td>山田 太郎</td><td>銀行口座変更</td><td>2026-07-02</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dash-col">
+      <div class="card">
+        <div class="card-title">⚠️ 期限アラート</div>
+        <table>
+          <thead><tr><th>氏名</th><th>種別</th><th>期限</th></tr></thead>
+          <tbody>
+            <tr><td>伊藤 健</td><td>雇用契約更新</td><td><span class="badge badge-amber">2026-08-01</span></td></tr>
+            <tr><td>中村 拓真</td><td>フォークリフト免許</td><td><span class="badge badge-red">2026-07-20</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">📤 e-Gov電子申請 状況</div>
+        <table>
+          <thead><tr><th>届出種別</th><th>対象者</th><th>状況</th></tr></thead>
+          <tbody>
+            <tr><td>資格取得届（健康保険・厚生年金）</td><td>高橋 陸</td><td><span class="badge badge-gray">作成中</span></td></tr>
+            <tr><td>雇用保険 資格取得届</td><td>高橋 陸</td><td><span class="badge badge-blue">送信待ち</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 従業員情報 ── -->
+<div class="page" id="page-hr-employees">
+  <div class="card" style="padding:14px 16px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input class="form-control" placeholder="🔍 氏名・社員番号で検索" style="max-width:220px">
+      <select class="form-control" style="max-width:140px"><option>全部署</option><option>営業部</option><option>開発部</option><option>総務部</option><option>人事部</option></select>
+      <select class="form-control" style="max-width:140px"><option>全在職区分</option><option>在籍</option><option>休職</option><option>退職</option></select>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">🔗 勤怠管理システムと自動同期（職員IDキー）</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">👥 従業員一覧（8名）</div>
+    <table>
+      <thead><tr><th>職員ID</th><th>氏名</th><th>部署</th><th>雇用区分</th><th>役職</th><th>在職区分</th><th>入社日</th><th>メール</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>E001</td><td>山田 太郎</td><td>営業部</td><td>正社員</td><td>部長</td><td><span class="badge badge-green">在籍</span></td><td>2018-04-01</td><td>t.yamada@example.com</td><td><button class="btn btn-outline btn-sm">詳細</button></td></tr>
+        <tr><td>E002</td><td>佐藤 花子</td><td>開発部</td><td>正社員</td><td>課長</td><td><span class="badge badge-green">在籍</span></td><td>2019-06-01</td><td>h.sato@example.com</td><td><button class="btn btn-outline btn-sm">詳細</button></td></tr>
+        <tr><td>E003</td><td>鈴木 一郎</td><td>総務部</td><td>契約社員</td><td>一般</td><td><span class="badge badge-green">在籍</span></td><td>2021-10-01</td><td>i.suzuki@example.com</td><td><button class="btn btn-outline btn-sm">詳細</button></td></tr>
+        <tr><td>E004</td><td>伊藤 健</td><td>人事部</td><td>正社員</td><td>一般</td><td><span class="badge badge-green">在籍</span></td><td>2020-04-01</td><td>k.ito@example.com</td><td><button class="btn btn-outline btn-sm">詳細</button></td></tr>
+        <tr><td>E005</td><td>中村 拓真</td><td>営業部</td><td>アルバイト</td><td>—</td><td><span class="badge badge-amber">休職</span></td><td>2022-09-01</td><td>t.nakamura@example.com</td><td><button class="btn btn-outline btn-sm">詳細</button></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">※ 残り3名は省略（イメージ確認用モックアップ）</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📇 従業員詳細プレビュー（例：山田 太郎）</div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'tab-hr-emp-basic')">基本情報</div>
+      <div class="tab" onclick="switchTab(this,'tab-hr-emp-family')">扶養・社保</div>
+      <div class="tab" onclick="switchTab(this,'tab-hr-emp-contract')">契約・資格・免許</div>
+      <div class="tab" onclick="switchTab(this,'tab-hr-emp-eval')">評価</div>
+      <div class="tab" onclick="switchTab(this,'tab-hr-emp-files')">添付ファイル</div>
+      <div class="tab" onclick="switchTab(this,'tab-hr-emp-custom')">自由項目</div>
+    </div>
+    <div class="tab-content active" id="tab-hr-emp-basic">
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">住所</div><div>東京都新宿区西新宿1-1-1</div></div>
+        <div class="form-group"><div class="form-label">電話番号</div><div>090-1234-5678</div></div>
+        <div class="form-group"><div class="form-label">通勤方法</div><div>電車＋バス</div></div>
+        <div class="form-group"><div class="form-label">通勤手当（月額）</div><div>18,000円</div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-hr-emp-family">
+      <table>
+        <thead><tr><th>氏名</th><th>続柄</th><th>生年月日</th><th>種別</th></tr></thead>
+        <tbody><tr><td>山田 花</td><td>配偶者</td><td>1988-03-02</td><td>税扶養・社保扶養</td></tr></tbody>
+      </table>
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group"><div class="form-label">健康保険番号</div><div>1234567</div></div>
+        <div class="form-group"><div class="form-label">雇用保険番号</div><div>1234-567890-1</div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-hr-emp-contract">
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">雇用契約期間</div><div>無期雇用</div></div>
+        <div class="form-group"><div class="form-label">資格</div><div>簿記2級</div></div>
+        <div class="form-group"><div class="form-label">免許</div><div>普通自動車第一種（〜2029-05）</div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="tab-hr-emp-eval">
+      <table><thead><tr><th>評価期間</th><th>評価者</th><th>総合評価</th></tr></thead>
+      <tbody><tr><td>2025年下期</td><td>取締役 小林</td><td><span class="badge badge-blue">B+</span></td></tr></tbody></table>
+    </div>
+    <div class="tab-content" id="tab-hr-emp-files">
+      <table><thead><tr><th>ファイル名</th><th>種別</th><th>アップロード日</th></tr></thead>
+      <tbody>
+        <tr><td>雇用契約書_山田太郎.pdf</td><td>PDF</td><td>2018-04-01</td></tr>
+        <tr><td>扶養控除等申告書_2026.pdf</td><td>PDF</td><td>2026-01-10</td></tr>
+      </tbody></table>
+    </div>
+    <div class="tab-content" id="tab-hr-emp-custom">
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">緊急連絡先（自由項目・文字）</div><div>山田 花（配偶者）090-8765-4321</div></div>
+        <div class="form-group"><div class="form-label">社用車利用（自由項目・チェックボックス）</div><div>☑ 利用する</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 入社手続き ── -->
+<div class="page" id="page-hr-onboarding">
+  <div class="card">
+    <div class="card-title">📝 入社手続きフロー</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px">
+      <span class="badge badge-blue">①管理者登録</span>→
+      <span class="badge badge-blue">②招待メール送信</span>→
+      <span class="badge badge-gray">③本人ログイン</span>→
+      <span class="badge badge-gray">④必要事項入力</span>→
+      <span class="badge badge-gray">⑤書類アップロード</span>→
+      <span class="badge badge-gray">⑥提出</span>→
+      <span class="badge badge-gray">⑦人事確認</span>→
+      <span class="badge badge-gray">⑧承認/差戻し</span>→
+      <span class="badge badge-gray">⑨従業員情報へ反映</span>→
+      <span class="badge badge-purple">⑩e-Gov電子申請</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">👥 入社予定者一覧</div>
+    <table>
+      <thead><tr><th>氏名</th><th>入社予定日</th><th>現在ステップ</th><th>状況</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>高橋 陸</td><td>2026-07-15</td><td>⑤書類アップロード</td><td><span class="badge badge-amber">本人対応待ち</span></td><td><button class="btn btn-outline btn-sm">確認</button></td></tr>
+        <tr><td>渡辺 美咲</td><td>2026-08-01</td><td>②招待メール送信済</td><td><span class="badge badge-blue">未ログイン</span></td><td><button class="btn btn-outline btn-sm">再送信</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">📄 必須書類設定</div>
+    <table>
+      <thead><tr><th>書類名</th><th>必須/任意</th></tr></thead>
+      <tbody>
+        <tr><td>履歴書</td><td><span class="badge badge-red">必須</span></td></tr>
+        <tr><td>雇用契約書</td><td><span class="badge badge-red">必須</span></td></tr>
+        <tr><td>扶養控除等申告書</td><td><span class="badge badge-red">必須</span></td></tr>
+        <tr><td>給与口座確認書類</td><td><span class="badge badge-red">必須</span></td></tr>
+        <tr><td>本人確認書類</td><td><span class="badge badge-red">必須</span></td></tr>
+        <tr><td>資格証</td><td><span class="badge badge-gray">任意</span></td></tr>
+        <tr><td>免許証</td><td><span class="badge badge-gray">任意</span></td></tr>
+        <tr><td>住民票</td><td><span class="badge badge-gray">必要時のみ</span></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px"><button class="btn btn-outline btn-sm">＋ 書類項目を追加</button></div>
+  </div>
+</div>
+
+<!-- ── 従業員申請 ── -->
+<div class="page" id="page-hr-requests">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'tab-hr-req-all')">すべて</div>
+    <div class="tab" onclick="switchTab(this,'tab-hr-req-address')">住所変更</div>
+    <div class="tab" onclick="switchTab(this,'tab-hr-req-family')">扶養</div>
+    <div class="tab" onclick="switchTab(this,'tab-hr-req-bank')">口座変更</div>
+    <div class="tab" onclick="switchTab(this,'tab-hr-req-license')">資格・免許</div>
+  </div>
+  <div class="tab-content active" id="tab-hr-req-all">
+    <div class="card">
+      <table>
+        <thead><tr><th>申請者</th><th>種類</th><th>申請日</th><th>状況</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr><td>佐藤 花子</td><td>住所変更</td><td>2026-07-05</td><td><span class="badge badge-amber">申請中</span></td><td><button class="btn btn-green btn-sm">承認</button> <button class="btn btn-outline btn-sm">差戻し</button></td></tr>
+          <tr><td>鈴木 一郎</td><td>扶養追加</td><td>2026-07-04</td><td><span class="badge badge-amber">申請中</span></td><td><button class="btn btn-green btn-sm">承認</button> <button class="btn btn-outline btn-sm">差戻し</button></td></tr>
+          <tr><td>山田 太郎</td><td>銀行口座変更</td><td>2026-07-02</td><td><span class="badge badge-amber">申請中</span></td><td><button class="btn btn-green btn-sm">承認</button> <button class="btn btn-outline btn-sm">差戻し</button></td></tr>
+          <tr><td>中村 拓真</td><td>資格更新（フォークリフト）</td><td>2026-06-28</td><td><span class="badge badge-green">承認済</span></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-hr-req-address"><div class="card"><div style="color:var(--muted);font-size:12px">住所変更申請のみ表示（モックアップ）</div></div></div>
+  <div class="tab-content" id="tab-hr-req-family"><div class="card"><div style="color:var(--muted);font-size:12px">扶養関連申請のみ表示（モックアップ）</div></div></div>
+  <div class="tab-content" id="tab-hr-req-bank"><div class="card"><div style="color:var(--muted);font-size:12px">口座変更申請のみ表示（モックアップ）</div></div></div>
+  <div class="tab-content" id="tab-hr-req-license"><div class="card"><div style="color:var(--muted);font-size:12px">資格・免許関連申請のみ表示（モックアップ）</div></div></div>
+</div>
+
+<!-- ── Web給与明細 ── -->
+<div class="page" id="page-hr-payslip">
+  <div class="card">
+    <div class="card-title">📥 給与CSV取込</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input type="month" class="form-control" style="max-width:150px" value="2026-07">
+      <input type="file" class="form-control" style="max-width:240px">
+      <button class="btn btn-primary btn-sm">取込</button>
+      <span style="font-size:11px;color:var(--muted)">※ 給与計算は行わず、外部給与ソフトのCSVを取り込んで明細化します</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 給与明細 一覧</div>
+    <table>
+      <thead><tr><th>対象月</th><th>公開日</th><th>対象人数</th><th>状況</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>2026年6月分</td><td>2026-06-25</td><td>8名</td><td><span class="badge badge-green">公開済</span></td><td><button class="btn btn-outline btn-sm">PDF表示</button></td></tr>
+        <tr><td>2026年7月分</td><td>2026-07-25（予定）</td><td>8名</td><td><span class="badge badge-amber">公開予約</span></td><td><button class="btn btn-outline btn-sm">プレビュー</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">📄 明細プレビュー（例：山田 太郎 / 2026年6月分）</div>
+    <div style="border:1px dashed var(--border);border-radius:8px;padding:24px;text-align:center;color:var(--muted);font-size:12px">
+      📄 PDFプレビュー（モックアップ）<br>支給合計 / 控除合計 / 差引支給額 などをPDFで表示・ダウンロードします
+    </div>
+  </div>
+</div>
+
+<!-- ── マイナンバー管理 ── -->
+<div class="page" id="page-hr-mynumber">
+  <div class="hr-banner" style="background:var(--lamber);border:1px solid #fde3a7;color:var(--amber)">
+    ⚠️ 初期版につきマイナンバー本体は保存しません。提出状況のみを管理します（暗号化保存・二段階認証などは将来拡張として設計のみ準備）。
+  </div>
+  <div class="card">
+    <div class="card-title">🔢 マイナンバー提出状況</div>
+    <table>
+      <thead><tr><th>氏名</th><th>部署</th><th>状況</th><th>更新日</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>山田 太郎</td><td>営業部</td><td><span class="badge badge-green">確認済</span></td><td>2026-04-02</td><td><button class="btn btn-outline btn-sm">履歴</button></td></tr>
+        <tr><td>佐藤 花子</td><td>開発部</td><td><span class="badge badge-green">確認済</span></td><td>2026-04-02</td><td><button class="btn btn-outline btn-sm">履歴</button></td></tr>
+        <tr><td>高橋 陸</td><td>営業部</td><td><span class="badge badge-blue">提出依頼中</span></td><td>2026-07-06</td><td><button class="btn btn-outline btn-sm">催促</button></td></tr>
+        <tr><td>中村 拓真</td><td>営業部</td><td><span class="badge badge-red">差戻し</span></td><td>2026-06-30</td><td><button class="btn btn-outline btn-sm">再依頼</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── e-Gov電子申請 ── -->
+<div class="page" id="page-hr-egov">
+  <div class="hr-banner" style="background:var(--lpurple);border:1px solid #ddd0fb;color:var(--purple)">
+    📤 第1段階：届出作成・入力チェック・一覧管理（API送信・結果取得は第2段階以降で対応）
+  </div>
+  <div class="card">
+    <div class="card-title">📋 届出一覧</div>
+    <table>
+      <thead><tr><th>届出種別</th><th>対象者</th><th>作成日</th><th>状況</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>資格取得届（健康保険・厚生年金）</td><td>高橋 陸</td><td>2026-07-05</td><td><span class="badge badge-gray">作成中</span></td><td><button class="btn btn-outline btn-sm">編集</button></td></tr>
+        <tr><td>雇用保険 資格取得届</td><td>高橋 陸</td><td>2026-07-05</td><td><span class="badge badge-blue">入力チェック済</span></td><td><button class="btn btn-outline btn-sm">確認</button></td></tr>
+        <tr><td>扶養異動届</td><td>鈴木 一郎</td><td>2026-07-04</td><td><span class="badge badge-gray">作成中</span></td><td><button class="btn btn-outline btn-sm">編集</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">対象届出（設定）</div>
+    <div style="font-size:12px;color:var(--muted)">健康保険 / 厚生年金 / 雇用保険 / 扶養異動 / 資格取得 / 資格喪失 ／ その他追加可能</div>
+  </div>
+</div>
+
+<!-- ── 権限管理 ── -->
+<div class="page" id="page-hr-permissions">
+  <div class="card">
+    <div class="card-title">🔐 権限マトリクス（ユーザーごとに個別設定）</div>
+    <div style="overflow-x:auto">
+    <table style="font-size:12px">
+      <thead><tr><th>氏名</th><th>従業員閲覧</th><th>従業員編集</th><th>申請承認</th><th>給与明細</th><th>マイナンバー</th><th>e-Gov</th><th>CSV</th><th>システム設定</th><th>部署管理</th></tr></thead>
+      <tbody>
+        <tr><td>伊藤 健（人事）</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>—</td><td>✅</td></tr>
+        <tr><td>佐藤 花子（部門長）</td><td>✅（自部署）</td><td>—</td><td>✅（自部署）</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>山田 太郎（一般）</td><td>本人のみ</td><td>本人のみ</td><td>—</td><td>本人のみ</td><td>本人のみ</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div style="margin-top:10px"><button class="btn btn-outline btn-sm">＋ ユーザーの権限を編集</button></div>
+  </div>
+</div>
+
+<!-- ── 部門管理 ── -->
+<div class="page" id="page-hr-departments">
+  <div class="card">
+    <div class="card-title">🏢 部門別アクセス範囲設定</div>
+    <table>
+      <thead><tr><th>部署</th><th>対象ユーザー</th><th>閲覧範囲</th><th>権限</th></tr></thead>
+      <tbody>
+        <tr><td>営業部</td><td>部門長：佐藤 花子</td><td>自部署のみ</td><td><span class="badge badge-blue">閲覧のみ</span></td></tr>
+        <tr><td>開発部</td><td>部門長：鈴木 一郎</td><td>自部署のみ</td><td><span class="badge badge-green">編集可</span></td></tr>
+        <tr><td>人事部</td><td>人事担当：伊藤 健</td><td>全社</td><td><span class="badge badge-purple">承認可</span></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px"><button class="btn btn-outline btn-sm">＋ 部門設定を追加</button></div>
+  </div>
+</div>
+
+<!-- ── カスタム項目設定 ── -->
+<div class="page" id="page-hr-custom">
+  <div class="card">
+    <div class="card-title">🛠️ カスタム項目一覧</div>
+    <table>
+      <thead><tr><th>項目名</th><th>種別</th><th>表示先</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>社用車利用</td><td>チェックボックス</td><td>従業員情報</td><td><button class="btn btn-outline btn-sm">編集</button></td></tr>
+        <tr><td>緊急連絡先メモ</td><td>長文</td><td>従業員情報</td><td><button class="btn btn-outline btn-sm">編集</button></td></tr>
+        <tr><td>資格証PDF</td><td>PDF添付</td><td>入社手続き</td><td><button class="btn btn-outline btn-sm">編集</button></td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px"><button class="btn btn-primary btn-sm">＋ カスタム項目を追加</button></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">対応種別：文字 / 数値 / 日付 / 選択 / チェックボックス / 複数選択 / 長文 / PDF / 画像 / Word / Excel / ZIP / その他添付ファイル</div>
+  </div>
+</div>
+
+<!-- ── 通知設定 ── -->
+<div class="page" id="page-hr-notify">
+  <div class="card">
+    <div class="card-title">🔔 通知設定</div>
+    <table>
+      <thead><tr><th>通知対象</th><th>メール通知</th><th>システム通知</th></tr></thead>
+      <tbody>
+        <tr><td>入社依頼</td><td>☑</td><td>☑</td></tr>
+        <tr><td>提出依頼</td><td>☑</td><td>☑</td></tr>
+        <tr><td>申請</td><td>☑</td><td>☑</td></tr>
+        <tr><td>承認</td><td>☑</td><td>☐</td></tr>
+        <tr><td>差戻し</td><td>☑</td><td>☑</td></tr>
+        <tr><td>給与公開</td><td>☑</td><td>☐</td></tr>
+        <tr><td>契約期限</td><td>☑</td><td>☑</td></tr>
+        <tr><td>資格期限</td><td>☑</td><td>☑</td></tr>
+        <tr><td>在留期限</td><td>☑</td><td>☑</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px"><button class="btn btn-primary btn-sm">保存</button></div>
+  </div>
+</div>
+
+<!-- ── ファイル管理 ── -->
+<div class="page" id="page-hr-files">
+  <div class="card">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="file" class="form-control" style="max-width:260px">
+      <select class="form-control" style="max-width:160px"><option>対象従業員を選択</option></select>
+      <button class="btn btn-primary btn-sm">アップロード</button>
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">容量制限：1ファイルあたり 10MB</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📁 ファイル一覧</div>
+    <table>
+      <thead><tr><th>ファイル名</th><th>種別</th><th>対象従業員</th><th>アップロード日</th><th>サイズ</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>雇用契約書_山田太郎.pdf</td><td>PDF</td><td>山田 太郎</td><td>2018-04-01</td><td>420KB</td><td><button class="btn btn-outline btn-sm">プレビュー</button> <button class="btn btn-outline btn-sm">DL</button></td></tr>
+        <tr><td>履歴書_高橋陸.pdf</td><td>PDF</td><td>高橋 陸</td><td>2026-07-01</td><td>1.1MB</td><td><button class="btn btn-outline btn-sm">プレビュー</button> <button class="btn btn-outline btn-sm">DL</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── CSV連携 ── -->
+<div class="page" id="page-hr-csv">
+  <div class="dash-2col">
+    <div class="dash-col">
+      <div class="card">
+        <div class="card-title">📥 CSVインポート</div>
+        <div class="form-group"><div class="form-label">対象データ</div>
+          <select class="form-control"><option>従業員</option><option>給与</option><option>部署</option><option>役職</option><option>自由項目</option></select>
+        </div>
+        <div class="form-group"><input type="file" class="form-control"></div>
+        <button class="btn btn-primary btn-sm">取込実行</button>
+      </div>
+    </div>
+    <div class="dash-col">
+      <div class="card">
+        <div class="card-title">📤 CSVエクスポート</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-outline btn-sm">従業員 CSV出力</button>
+          <button class="btn btn-outline btn-sm">申請 CSV出力</button>
+          <button class="btn btn-outline btn-sm">履歴 CSV出力</button>
+          <button class="btn btn-outline btn-sm">給与 CSV出力</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 履歴管理・操作ログ ── -->
+<div class="page" id="page-hr-history">
+  <div class="card">
+    <div class="card-title">🕓 操作履歴・変更ログ</div>
+    <table style="font-size:12px">
+      <thead><tr><th>日時</th><th>操作者</th><th>対象</th><th>項目</th><th>変更前</th><th>変更後</th><th>IPアドレス</th></tr></thead>
+      <tbody>
+        <tr><td>2026-07-05 10:12</td><td>伊藤 健</td><td>佐藤 花子</td><td>住所</td><td>東京都渋谷区…</td><td>東京都新宿区…</td><td>203.0.113.10</td></tr>
+        <tr><td>2026-07-04 15:40</td><td>伊藤 健</td><td>鈴木 一郎</td><td>扶養（追加）</td><td>—</td><td>鈴木 次郎（子）</td><td>203.0.113.10</td></tr>
+        <tr><td>2026-07-02 09:30</td><td>山田 太郎</td><td>山田 太郎（本人）</td><td>銀行口座</td><td>〇〇銀行</td><td>△△銀行</td><td>198.51.100.5</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 </div><!-- content -->
 </div><!-- main -->
 </div><!-- app -->
@@ -2310,7 +2771,12 @@ const PAGE_TITLES = {
   dashboard:'ダッシュボード', punch:'打刻', timecard:'タイムカード',
   attendance:'勤務実績一覧', approval:'申請承認', shift:'シフト管理', leave:'休暇管理',
   overtime:'残業管理', reports:'集計・レポート', calendar:'変形労働カレンダー',
-  users:'ユーザー管理', settings:'システム設定', face:'顔登録管理'
+  users:'ユーザー管理', settings:'システム設定', face:'顔登録管理',
+  'hr-dashboard':'人事労務ダッシュボード', 'hr-employees':'従業員情報', 'hr-onboarding':'入社手続き',
+  'hr-requests':'従業員申請', 'hr-payslip':'Web給与明細', 'hr-mynumber':'マイナンバー管理',
+  'hr-egov':'e-Gov電子申請', 'hr-permissions':'権限管理', 'hr-departments':'部門管理',
+  'hr-custom':'カスタム項目設定', 'hr-notify':'通知設定', 'hr-files':'ファイル管理',
+  'hr-csv':'CSV連携', 'hr-history':'履歴・操作ログ'
 };
 
 window.nav = function(id){
@@ -2338,6 +2804,24 @@ window.nav = function(id){
   if(id==='face') loadFacePage();
   if(id==='notice') loadNotices();
   if(id==='settings'){ loadWdPatSettings(); loadDeemedOtSettings(); loadSideJobFeatureSettings(); }
+};
+
+// ── Mode Switch (勤怠管理 / 人事労務) ──
+window.switchMode = function(mode){
+  const isHr = mode === 'hr';
+  const navK = document.getElementById('navKintai');
+  const navH = document.getElementById('navHr');
+  if(navK) navK.style.display = isHr ? 'none' : '';
+  if(navH) navH.style.display = isHr ? '' : 'none';
+  const bK = document.getElementById('modeBtnKintai');
+  const bH = document.getElementById('modeBtnHr');
+  if(bK) bK.classList.toggle('active', !isHr);
+  if(bH) bH.classList.toggle('active', isHr);
+  const lm = document.getElementById('sidebarLogoMain');
+  const ls = document.getElementById('sidebarLogoSub');
+  if(lm) lm.textContent = isHr ? '🧑‍💼 人事労務' : '🕐 勤怠管理';
+  if(ls) ls.textContent = isHr ? '人事労務ポータル（イメージ確認版）' : '管理者ポータル';
+  nav(isHr ? 'hr-dashboard' : 'dashboard');
 };
 
 // ── Clock ──
