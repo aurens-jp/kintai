@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>打刻キオスク</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#60a5fa;--cyan:#06b6d4;--purple:#a78bfa;
+  --bg:#0c1220;--panel:#111827;--card:#1a2436;--border:rgba(255,255,255,.09);
+  --muted:rgba(255,255,255,.38);--txt:#f1f5f9;
+  --in-c:#22c55e;--out-c:#ef4444;--br-c:#f59e0b;--br2-c:#06b6d4;
+}
+html,body{height:100%;overflow:hidden;font-family:'Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--txt);touch-action:manipulation}
+
+/* ══ HEADER ══════════════════════════════════════════ */
+.hdr{
+  height:58px;display:flex;align-items:center;gap:0;
+  background:var(--panel);border-bottom:1px solid var(--border);
+  padding:0 20px;flex-shrink:0;
+}
+.hdr-title{font-size:16px;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.hdr-sep{width:1px;height:28px;background:var(--border);margin:0 16px;flex-shrink:0}
+/* 顔認証トグル */
+.face-toggle-wrap{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.face-toggle-lbl{font-size:12px;color:var(--muted);font-weight:600}
+.toggle-sw{width:44px;height:24px;background:rgba(255,255,255,.12);border-radius:12px;position:relative;transition:background .25s;flex-shrink:0}
+.toggle-sw.on{background:var(--blue)}
+.toggle-sw::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:9px;top:3px;left:3px;transition:left .25s}
+.toggle-sw.on::after{left:23px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.clock-box{text-align:right}
+.clock-t{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--blue);line-height:1}
+.clock-d{font-size:11px;color:var(--muted);margin-top:1px}
+.hdr-cfg{background:rgba(255,255,255,.07);border:none;color:var(--muted);padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer}
+.hdr-cfg:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* ══ LAYOUT ════════════════════════════════════════════ */
+.layout{flex:1;display:flex;min-height:0;overflow:hidden}
+
+/* ══ LEFT: 職員パネル ═══════════════════════════════════ */
+.emp-panel{
+  width:300px;flex-shrink:0;background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+}
+.ep-head{padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+.ep-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.ep-search{
+  width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);
+  border-radius:10px;color:#fff;padding:10px 14px;font-size:14px;outline:none;
+}
+.ep-search::placeholder{color:var(--muted)}
+.ep-search:focus{border-color:rgba(96,165,250,.5);background:rgba(255,255,255,.09)}
+.ep-list{flex:1;overflow-y:auto;padding:6px 8px}
+.ep-list::-webkit-scrollbar{width:4px}
+.ep-list::-webkit-scrollbar-track{background:transparent}
+.ep-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+.ep-dept-lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.06em;padding:10px 8px 4px;text-transform:uppercase}
+.ep-item{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;
+  cursor:pointer;transition:background .12s;margin-bottom:2px;
+}
+.ep-item:hover{background:rgba(255,255,255,.05)}
+.ep-item.sel{background:rgba(96,165,250,.14);border:1px solid rgba(96,165,250,.3)}
+.ep-item:not(.sel){border:1px solid transparent}
+.ep-avatar{
+  width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.ep-item.sel .ep-avatar{box-shadow:0 0 0 2px var(--blue)}
+.ep-info{}
+.ep-name{font-size:14px;font-weight:600;line-height:1.2}
+.ep-dept{font-size:11px;color:var(--muted);margin-top:2px}
+.ep-check{margin-left:auto;color:var(--blue);font-size:18px;opacity:0}
+.ep-item.sel .ep-check{opacity:1}
+.ep-none{text-align:center;padding:24px 0;font-size:13px;color:var(--muted)}
+
+/* ══ RIGHT: アクションパネル ══════════════════════════════ */
+.action-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* 選択中職員バナー */
+.sel-banner{
+  display:flex;align-items:center;gap:14px;padding:14px 20px;
+  background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;
+  min-height:64px;
+}
+.sel-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sel-info{flex:1}
+.sel-name{font-size:17px;font-weight:700;line-height:1.2}
+.sel-dept{font-size:12px;color:var(--muted);margin-top:2px}
+.sel-empty{font-size:14px;color:var(--muted)}
+.sel-clear{background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer}
+.sel-clear:hover{color:#fff;background:rgba(255,255,255,.12)}
+
+/* メインコンテンツ */
+.ap-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* 顔認証エリア */
+.face-area{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;gap:16px;align-items:flex-start;flex-shrink:0;
+  background:var(--panel);
+}
+.face-area.hidden{display:none}
+.cam-wrap{
+  position:relative;width:300px;flex-shrink:0;
+  aspect-ratio:4/3;background:#0a1220;border-radius:14px;overflow:hidden;
+  border:2px solid var(--border);
+}
+#video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;transform:scaleX(-1)}
+.face-guide{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);
+  width:120px;height:150px;border:2px dashed rgba(255,255,255,.18);border-radius:50%;pointer-events:none;
+  transition:border-color .3s,border-style .3s;
+}
+.face-guide.detecting{border-color:var(--amber);border-style:solid}
+.face-guide.ok{border-color:var(--green);border-style:solid;animation:fpulse 1s ease-in-out infinite alternate}
+@keyframes fpulse{to{box-shadow:0 0 14px rgba(34,197,94,.5)}}
+.cam-status{flex:1}
+.cam-status-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cam-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.cam-dot.ok{background:var(--green);animation:none}
+.cam-dot.off{background:rgba(255,255,255,.2);animation:none}
+#camTxt{font-size:13px;color:rgba(255,255,255,.75)}
+.conf-row{display:flex;align-items:center;gap:8px}
+.conf-bar{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.conf-fill{height:100%;border-radius:3px;transition:width .25s,background .25s;width:0}
+#confPct{font-size:12px;color:var(--muted);width:34px;text-align:right}
+.face-rec-result{margin-top:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;display:none}
+.face-rec-result.show{display:block}
+.frr-label{font-size:10px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.frr-name{font-size:18px;font-weight:700}
+.frr-hint{font-size:11px;color:var(--muted);margin-top:2px}
+.cam-reload{margin-top:10px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:7px 12px;font-size:11px;cursor:pointer;width:100%}
+.cam-reload:hover{color:#fff;background:rgba(255,255,255,.1)}
+
+/* 打刻ボタン */
+.punch-area{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 24px;gap:14px}
+.punch-prompt{font-size:13px;color:var(--muted);text-align:center;margin-bottom:4px}
+.punch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:600px;margin:0 auto;width:100%}
+.pbtn{
+  border:2px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:22px 16px;font-size:15px;font-weight:700;
+  position:relative;overflow:hidden;user-select:none;
+  min-height:100px;
+}
+.pbtn:not(:disabled):not(.cooling):hover{filter:brightness(1.12);transform:translateY(-1px)}
+.pbtn:not(:disabled):not(.cooling):active{transform:scale(.97)}
+.pbtn.enabled.in{border-color:var(--in-c);background:rgba(34,197,94,.1);color:var(--in-c)}
+.pbtn.enabled.out{border-color:var(--out-c);background:rgba(239,68,68,.1);color:var(--out-c)}
+.pbtn.enabled.br{border-color:var(--br-c);background:rgba(245,158,11,.1);color:var(--br-c)}
+.pbtn.enabled.br2{border-color:var(--br2-c);background:rgba(6,182,212,.1);color:var(--br2-c)}
+.pbtn.cooling{border-color:rgba(255,255,255,.08)!important;background:rgba(255,255,255,.03)!important;color:rgba(255,255,255,.25)!important;cursor:not-allowed}
+.pbtn:disabled{opacity:.35;cursor:not-allowed}
+.pbtn-icon{font-size:28px;line-height:1}
+.pbtn-lbl{font-size:15px;font-weight:800}
+.pbtn-cd{
+  position:absolute;bottom:8px;right:12px;font-size:18px;font-weight:800;
+  color:rgba(255,255,255,.35);font-variant-numeric:tabular-nums;
+}
+
+/* ══ BOTTOM LOG ════════════════════════════════════════ */
+.log-bar{
+  height:52px;flex-shrink:0;background:var(--panel);border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:8px;overflow-x:auto;
+}
+.log-bar::-webkit-scrollbar{display:none}
+.log-bar-lbl{font-size:10px;color:var(--muted);font-weight:700;white-space:nowrap;flex-shrink:0;letter-spacing:.06em;text-transform:uppercase}
+.log-chip{
+  display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);
+  white-space:nowrap;flex-shrink:0;font-size:12px;
+}
+.log-chip-name{font-weight:600}
+.log-chip-type{font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.log-chip-type.in{background:rgba(34,197,94,.2);color:var(--green)}
+.log-chip-type.out{background:rgba(239,68,68,.2);color:var(--red)}
+.log-chip-type.br{background:rgba(245,158,11,.2);color:var(--amber)}
+.log-chip-type.br2{background:rgba(6,182,212,.2);color:var(--cyan)}
+.log-chip-time{font-size:11px;color:var(--muted)}
+
+/* ══ RESULT TOAST ══════════════════════════════════════ */
+#resultToast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);
+  background:var(--card);border:2px solid var(--border);border-radius:24px;
+  padding:32px 48px;text-align:center;z-index:500;
+  opacity:0;pointer-events:none;transition:all .25s;min-width:320px;
+}
+#resultToast.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+#resultToast.success{border-color:var(--green);background:rgba(22,101,52,.5)}
+#rt-icon{font-size:56px;margin-bottom:14px}
+#rt-name{font-size:24px;font-weight:800;margin-bottom:6px}
+#rt-type{font-size:16px;color:var(--muted);margin-bottom:4px}
+#rt-time{font-size:14px;color:rgba(255,255,255,.4)}
+
+/* ══ CONFIG MODAL ══════════════════════════════════════ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-box{background:#1a2436;border:1px solid var(--border);border-radius:18px;padding:28px;width:420px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:18px}
+.cfg-row{margin-bottom:12px}
+.cfg-lbl{font-size:11px;color:var(--muted);margin-bottom:5px}
+.cfg-inp{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:9px;color:#fff;padding:9px 13px;font-size:13px;outline:none}
+.cfg-inp:focus{border-color:rgba(96,165,250,.5)}
+.cfg-btns{display:flex;gap:8px;margin-top:18px}
+.cfg-btn{flex:1;padding:11px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer}
+.cfg-save{background:var(--blue);color:#fff}
+.cfg-cancel{background:rgba(255,255,255,.08);color:#fff}
+.cfg-err{color:var(--red);font-size:11px;margin-top:6px;min-height:16px}
+
+/* ══ LOADING ══════════════════════════════════════════ */
+#loadOv{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.08);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadMsg{font-size:15px;color:rgba(255,255,255,.75)}
+#loadSub{font-size:12px;color:var(--muted);margin-top:-8px}
+.load-bar{width:240px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.load-fill{height:100%;background:var(--blue);transition:width .4s;width:0}
+</style>
+</head>
+<body style="display:flex;flex-direction:column;height:100vh">
+
+<!-- Loading -->
+<div id="loadOv">
+  <div class="spinner"></div>
+  <div id="loadMsg">キオスクを起動中...</div>
+  <div id="loadSub">しばらくお待ちください</div>
+  <div class="load-bar"><div class="load-fill" id="loadFill"></div></div>
+</div>
+
+<!-- Result Toast -->
+<div id="resultToast">
+  <div id="rt-icon">✅</div>
+  <div id="rt-name"></div>
+  <div id="rt-type"></div>
+  <div id="rt-time"></div>
+</div>
+
+<!-- Config Modal -->
+<div class="modal-bg" id="cfgModal">
+  <div class="modal-box">
+    <div class="modal-title">⚙️ 接続設定</div>
+    <div class="cfg-row"><div class="cfg-lbl">Supabase URL</div><input class="cfg-inp" id="cfgUrl" placeholder="https://xxxx.supabase.co"></div>
+    <div class="cfg-row"><div class="cfg-lbl">Anon Key</div><input class="cfg-inp" id="cfgKey" placeholder="eyJhbGciOi..."></div>
+    <div class="cfg-err" id="cfgErr"></div>
+    <div class="cfg-btns">
+      <button class="cfg-btn cfg-cancel" onclick="closeCfg()">キャンセル</button>
+      <button class="cfg-btn cfg-save" onclick="saveCfg()">保存・再起動</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HEADER ════ -->
+<div class="hdr">
+  <div class="hdr-title">🤖 打刻キオスク</div>
+  <div class="hdr-sep"></div>
+  <!-- 顔認証トグル -->
+  <div class="face-toggle-wrap" onclick="toggleFaceAuth()">
+    <div class="face-toggle-lbl">顔認証</div>
+    <div class="toggle-sw" id="faceToggleSw"></div>
+    <div id="faceToggleTxt" style="font-size:12px;font-weight:700;color:var(--muted)">OFF</div>
+  </div>
+  <div class="hdr-right">
+    <button class="hdr-cfg" onclick="openCfg()">⚙️ 設定</button>
+    <a href="index_leave.html" class="hdr-cfg" style="text-decoration:none">🖥 管理</a>
+    <div class="clock-box">
+      <div class="clock-t" id="clockTime">--:--:--</div>
+      <div class="clock-d" id="clockDate"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ LAYOUT ════ -->
+<div class="layout">
+
+  <!-- ── LEFT: 職員リスト ── -->
+  <div class="emp-panel">
+    <div class="ep-head">
+      <div class="ep-title">職員を選択</div>
+      <input class="ep-search" id="epSearch" placeholder="🔍 氏名・部署で検索..." oninput="filterEmps()" autocomplete="off">
+    </div>
+    <div class="ep-list" id="epList">
+      <div class="ep-none">読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: アクションパネル ── -->
+  <div class="action-panel">
+
+    <!-- 選択中職員バナー -->
+    <div class="sel-banner" id="selBanner">
+      <div id="selContent">
+        <div class="sel-empty">← 左のリストから職員を選択してください</div>
+      </div>
+    </div>
+
+    <div class="ap-content">
+
+      <!-- 顔認証エリア (ON時のみ表示) -->
+      <div class="face-area hidden" id="faceArea">
+        <div class="cam-wrap">
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="overlay"></canvas>
+          <div class="face-guide" id="faceGuide"></div>
+        </div>
+        <div class="cam-status" style="flex:1">
+          <div class="cam-status-row">
+            <div class="cam-dot off" id="camDot"></div>
+            <div id="camTxt">初期化中...</div>
+          </div>
+          <div class="conf-row">
+            <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
+            <div id="confPct">0%</div>
+          </div>
+          <!-- 認識結果 -->
+          <div class="face-rec-result" id="faceRecResult">
+            <div class="frr-label">✅ 顔認証済み</div>
+            <div class="frr-name" id="frrName"></div>
+            <div class="frr-hint">↓ 打刻種別を選択してください</div>
+          </div>
+          <button class="cam-reload" onclick="reloadFaces()">🔄 顔データ更新</button>
+        </div>
+      </div>
+
+      <!-- 打刻ボタン -->
+      <div class="punch-area">
+        <div class="punch-prompt" id="punchPrompt">職員を選択すると打刻できます</div>
+        <div class="punch-grid">
+          <button class="pbtn in" id="pb-出勤"    onclick="doPunch('出勤','本業')"    disabled><div class="pbtn-icon">🟢</div><div class="pbtn-lbl">出勤</div><div class="pbtn-cd" id="cd-出勤"></div></button>
+          <button class="pbtn out" id="pb-退勤"   onclick="doPunch('退勤','本業')"    disabled><div class="pbtn-icon">🔴</div><div class="pbtn-lbl">退勤</div><div class="pbtn-cd" id="cd-退勤"></div></button>
+          <button class="pbtn br"  id="pb-休憩開始" onclick="doPunch('休憩開始','本業')" disabled><div class="pbtn-icon">⏸</div><div class="pbtn-lbl">休憩開始</div><div class="pbtn-cd" id="cd-休憩開始"></div></button>
+          <button class="pbtn br2" id="pb-休憩終了" onclick="doPunch('休憩終了','本業')" disabled><div class="pbtn-icon">▶️</div><div class="pbtn-lbl">休憩終了</div><div class="pbtn-cd" id="cd-休憩終了"></div></button>
+        </div>
+        <!-- 副業打刻ボタン -->
+        <div id="kiosk-sidejob-wrap" style="display:none;margin-top:16px">
+          <div style="font-size:11px;font-weight:700;color:#7c3aed;letter-spacing:.04em;margin-bottom:8px;text-align:center">💼 副業打刻</div>
+          <div class="punch-grid" style="max-width:300px;margin:0 auto">
+            <button class="pbtn" id="pb-副業出勤" onclick="doPunch('出勤','副業')" disabled
+              style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff">
+              <div class="pbtn-icon">💼</div><div class="pbtn-lbl">副業出勤</div><div class="pbtn-cd" id="cd-副業出勤"></div>
+            </button>
+            <button class="pbtn" id="pb-副業退勤" onclick="doPunch('退勤','副業')" disabled
+              style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff">
+              <div class="pbtn-icon">🏠</div><div class="pbtn-lbl">副業退勤</div><div class="pbtn-cd" id="cd-副業退勤"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ap-content -->
+  </div><!-- /action-panel -->
+
+</div><!-- /layout -->
+
+<!-- ════ BOTTOM LOG ════ -->
+<div class="log-bar">
+  <div class="log-bar-lbl">直近</div>
+  <div id="logChips" style="display:flex;gap:6px">
+    <div style="font-size:12px;color:var(--muted)">まだ打刻はありません</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+'use strict';
+
+// ══ 設定 ════════════════════════════════════════════
+var DEF_URL  = 'https://judzjxzmurlqchmuakod.supabase.co';
+var DEF_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1ZHpqeHptdXJscWNobXVha29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjg1NTYsImV4cCI6MjA5NzMwNDU1Nn0.uFcLqB9UVhTx3eAebSPjWw0Tdlt5ZHSloYxjcLLVdMs';
+var MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
+var THRESHOLD  = 0.45;
+var COOLDOWN   = 8000;   // 同一人物の再認証間隔 ms
+var CONFIRM_N  = 3;      // N フレーム連続で確定
+var DETECT_INT = 280;
+var BTN_COOLDOWN = 4;    // ボタン二度押し防止 秒数
+
+// ══ 状態 ════════════════════════════════════════════
+var sb = null;
+var allEmps = [];          // 全従業員
+var selectedEmp = null;    // 選択中の従業員 {id, name, dept, auth_id}
+var faceEnabled = false;   // 顔認証ON/OFF
+var faceMatcher = null;
+var empFaceMap = {};       // employees.id → {name, auth_id}
+var recentLog = [];
+var processing = false;
+var detectTmo = null;
+var lastFacePunch = {};    // 顔認証クールダウン
+var confirmCnt = {};
+var cdTimers = {};         // ボタンカウントダウンタイマー
+
+// ══ 時計 ═════════════════════════════════════════════
+function tick(){
+  var n = new Date();
+  document.getElementById('clockTime').textContent = n.toLocaleTimeString('ja-JP',{hour12:false});
+  document.getElementById('clockDate').textContent = n.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+}
+setInterval(tick, 1000); tick();
+
+// ══ 顔認証 ON/OFF ═════════════════════════════════════
+function toggleFaceAuth(){
+  faceEnabled = !faceEnabled;
+  localStorage.setItem('kiosk_face', faceEnabled?'1':'0');
+  applyFaceMode();
+}
+function applyFaceMode(){
+  var sw  = document.getElementById('faceToggleSw');
+  var txt = document.getElementById('faceToggleTxt');
+  var fa  = document.getElementById('faceArea');
+  if(faceEnabled){
+    sw.classList.add('on');
+    txt.textContent = 'ON'; txt.style.color = 'var(--blue)';
+    fa.classList.remove('hidden');
+    if(!faceMatcher) initFaceRecog();
+    else if(!document.getElementById('video').srcObject) startCamera();
+  } else {
+    sw.classList.remove('on');
+    txt.textContent = 'OFF'; txt.style.color = 'var(--muted)';
+    fa.classList.add('hidden');
+    stopCamera();
+  }
+}
+
+// ══ 設定モーダル ══════════════════════════════════════
+function openCfg(){
+  document.getElementById('cfgUrl').value = localStorage.getItem('sb_url') || DEF_URL;
+  document.getElementById('cfgKey').value = localStorage.getItem('sb_key') || DEF_KEY;
+  document.getElementById('cfgErr').textContent = '';
+  document.getElementById('cfgModal').classList.add('open');
+}
+function closeCfg(){ document.getElementById('cfgModal').classList.remove('open'); }
+function saveCfg(){
+  var url = document.getElementById('cfgUrl').value.trim();
+  var key = document.getElementById('cfgKey').value.trim();
+  if(!url||!key){ document.getElementById('cfgErr').textContent='URLとKeyを入力してください'; return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  location.reload();
+}
+
+// ══ Supabase ═══════════════════════════════════════════
+function initSb(){
+  var url = localStorage.getItem('sb_url') || DEF_URL;
+  var key = localStorage.getItem('sb_key') || DEF_KEY;
+  sb = window.supabase.createClient(url, key);
+}
+
+// ══ 起動 ════════════════════════════════════════════
+async function boot(){
+  initSb();
+  setLoad('従業員データを取得中...', '', 30);
+  await loadEmps();
+  setLoad('起動完了', '', 100);
+  setTimeout(hideLoad, 500);
+
+  // 顔認証の初期状態を復元
+  faceEnabled = localStorage.getItem('kiosk_face') === '1';
+  applyFaceMode();
+}
+
+function setLoad(msg, sub, pct){
+  document.getElementById('loadMsg').textContent = msg;
+  if(sub !== undefined) document.getElementById('loadSub').textContent = sub;
+  if(pct !== undefined) document.getElementById('loadFill').style.width = pct + '%';
+}
+function hideLoad(){ document.getElementById('loadOv').style.display = 'none'; }
+
+// ══ 従業員リスト ════════════════════════════════════════
+async function loadEmps(){
+  var {data, error} = await sb.from('employees')
+    .select('id,auth_id,name,department')
+    .eq('is_active', true)
+    .order('department').order('name');
+  if(error || !data){ renderEmpList([]); return; }
+  allEmps = data;
+  renderEmpList(allEmps);
+}
+
+function filterEmps(){
+  var q = (document.getElementById('epSearch').value || '').trim().toLowerCase();
+  renderEmpList(q ? allEmps.filter(function(e){
+    return (e.name||'').toLowerCase().includes(q) || (e.department||'').toLowerCase().includes(q);
+  }) : allEmps);
+}
+
+function renderEmpList(list){
+  var el = document.getElementById('epList');
+  if(!list.length){ el.innerHTML = '<div class="ep-none">該当なし</div>'; return; }
+
+  // 部署でグループ化
+  var groups = {};
+  list.forEach(function(e){
+    var d = e.department || '未設定';
+    if(!groups[d]) groups[d] = [];
+    groups[d].push(e);
+  });
+
+  var html = '';
+  Object.keys(groups).forEach(function(dept){
+    html += '<div class="ep-dept-lbl">'+esc(dept)+'</div>';
+    groups[dept].forEach(function(e){
+      var sel = selectedEmp && selectedEmp.id === e.id;
+      var ini = (e.name||'?')[0];
+      html += '<div class="ep-item'+(sel?' sel':'')+'" onclick="selectEmp(\''+e.id+'\')">'
+        +'<div class="ep-avatar">'+esc(ini)+'</div>'
+        +'<div class="ep-info"><div class="ep-name">'+esc(e.name)+'</div><div class="ep-dept">'+esc(e.department||'')+'</div></div>'
+        +'<div class="ep-check">✓</div>'
+        +'</div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+function selectEmp(id){
+  var emp = allEmps.find(function(e){ return e.id === id; });
+  if(!emp) return;
+  selectedEmp = emp;
+  renderEmpList(allEmps.filter(function(e){
+    var q = (document.getElementById('epSearch').value||'').trim().toLowerCase();
+    return !q || (e.name||'').toLowerCase().includes(q) || (e.department||'').toLowerCase().includes(q);
+  }));
+  updateSelBanner();
+  enablePunchBtns();
+}
+
+function clearSel(){
+  selectedEmp = null;
+  updateSelBanner();
+  disablePunchBtns();
+  var q = (document.getElementById('epSearch').value||'').trim().toLowerCase();
+  renderEmpList(q ? allEmps.filter(function(e){
+    return (e.name||'').toLowerCase().includes(q)||(e.department||'').toLowerCase().includes(q);
+  }) : allEmps);
+}
+
+function updateSelBanner(){
+  var c = document.getElementById('selContent');
+  if(!selectedEmp){
+    c.innerHTML = '<div class="sel-empty">← 左のリストから職員を選択してください</div>';
+    return;
+  }
+  var ini = (selectedEmp.name||'?')[0];
+  c.innerHTML = '<div class="sel-avatar">'+esc(ini)+'</div>'
+    +'<div class="sel-info"><div class="sel-name">'+esc(selectedEmp.name)+'</div><div class="sel-dept">'+esc(selectedEmp.department||'')+'</div></div>'
+    +'<button class="sel-clear" onclick="clearSel()">選択解除</button>';
+}
+
+// ══ 打刻ボタン制御 ════════════════════════════════════
+function getSideJobEnabled(){
+  return localStorage.getItem('sidejob_enabled')==='1'
+      && localStorage.getItem('sidejob_show_kiosk')==='1';
+}
+function applySideJobVisibility(){
+  var wrap=document.getElementById('kiosk-sidejob-wrap');
+  if(wrap) wrap.style.display=getSideJobEnabled()?'':'none';
+}
+function enablePunchBtns(){
+  ['出勤','退勤','休憩開始','休憩終了'].forEach(function(t){
+    var btn = document.getElementById('pb-'+t);
+    if(btn && !btn.classList.contains('cooling')){
+      btn.disabled = false;
+      btn.classList.add('enabled');
+    }
+  });
+  // 副業ボタン
+  if(getSideJobEnabled()){
+    ['副業出勤','副業退勤'].forEach(function(t){
+      var btn=document.getElementById('pb-'+t);
+      if(btn&&!btn.classList.contains('cooling')){btn.disabled=false;btn.classList.add('enabled');}
+    });
+  }
+  document.getElementById('punchPrompt').textContent = '打刻種別を選択してください';
+}
+function disablePunchBtns(){
+  ['出勤','退勤','休憩開始','休憩終了','副業出勤','副業退勤'].forEach(function(t){
+    var btn = document.getElementById('pb-'+t);
+    if(btn && !btn.classList.contains('cooling')){
+      btn.disabled = true;
+      btn.classList.remove('enabled');
+    }
+  });
+  document.getElementById('punchPrompt').textContent = '職員を選択すると打刻できます';
+}
+
+// ボタン二度押し防止クールダウン (BTN_COOLDOWN 秒)
+function startCooldown(type){
+  var btn = document.getElementById('pb-'+type);
+  var cdEl = document.getElementById('cd-'+type);
+  if(!btn) return;
+  btn.disabled = true;
+  btn.classList.remove('enabled');
+  btn.classList.add('cooling');
+  var remain = BTN_COOLDOWN;
+  if(cdEl) cdEl.textContent = remain;
+  if(cdTimers[type]) clearInterval(cdTimers[type]);
+  cdTimers[type] = setInterval(function(){
+    remain--;
+    if(cdEl) cdEl.textContent = remain > 0 ? remain : '';
+    if(remain <= 0){
+      clearInterval(cdTimers[type]);
+      btn.classList.remove('cooling');
+      // 職員が選択中なら再有効化
+      if(selectedEmp){
+        btn.disabled = false;
+        btn.classList.add('enabled');
+      }
+    }
+  }, 1000);
+}
+
+// ══ 打刻実行 ════════════════════════════════════════
+async function doPunch(type, jobType){
+  var emp = selectedEmp;
+  if(!emp) return;
+  startCooldown(type);
+
+  var now = new Date();
+  var timeStr = now.toLocaleTimeString('ja-JP',{hour12:false});
+  var typeIcon = {出勤:'✅',退勤:'👋',休憩開始:'⏸',休憩終了:'▶️'}[type]||'✅';
+  var typeClass = {出勤:'in',退勤:'out',休憩開始:'br',休憩終了:'br2'}[type]||'in';
+
+  // 結果トースト
+  showResult(typeIcon, emp.name, type, timeStr, 'success');
+
+  // DB保存
+  if(sb && emp.auth_id){
+    await sb.from('punch_records').insert({
+      user_id:    emp.auth_id,
+      punch_type: type,
+      job_type:   jobType||'本業',
+      punched_at: now.toISOString(),
+      note:       faceEnabled && document.getElementById('faceRecResult').classList.contains('show')
+                  ? '顔認証補助・手動確定' : '手動打刻'
+    });
+  }
+
+  // ログ追加
+  addLog(emp.name, type, timeStr, typeClass);
+
+  // 選択をリセット（次の人を選びやすく）
+  setTimeout(function(){
+    clearSel();
+    hideFaceRecResult();
+  }, 3500);
+}
+
+// ══ 結果表示 ══════════════════════════════════════════
+function showResult(icon, name, type, time, state){
+  var t = document.getElementById('resultToast');
+  document.getElementById('rt-icon').textContent  = icon;
+  document.getElementById('rt-name').textContent  = name;
+  document.getElementById('rt-type').textContent  = type;
+  document.getElementById('rt-time').textContent  = time;
+  t.className = 'show' + (state==='success' ? ' success' : '');
+  setTimeout(function(){ t.className = ''; }, 3200);
+}
+
+// ══ ログ ══════════════════════════════════════════════
+function addLog(name, type, time, cls){
+  recentLog.unshift({name:name, type:type, time:time, cls:cls});
+  if(recentLog.length > 15) recentLog.pop();
+  var html = recentLog.map(function(r){
+    return '<div class="log-chip">'
+      +'<span class="log-chip-name">'+esc(r.name)+'</span>'
+      +'<span class="log-chip-type '+(r.cls||'in')+'">'+esc(r.type)+'</span>'
+      +'<span class="log-chip-time">'+esc(r.time)+'</span>'
+      +'</div>';
+  }).join('');
+  document.getElementById('logChips').innerHTML = html;
+}
+
+// ══ 顔認証 ════════════════════════════════════════════
+async function initFaceRecog(){
+  setStatus('AIモデルを読み込み中...');
+  setLoad('顔認証AIを読み込み中...', '初回は少し時間がかかります', 50);
+  document.getElementById('loadOv').style.display = 'flex';
+  try {
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+    ]);
+  } catch(e){
+    setStatus('AI読み込みエラー: '+e.message);
+    hideLoad();
+    return;
+  }
+  await loadFaces();
+  await startCamera();
+  setLoad('完了', '', 100);
+  setTimeout(hideLoad, 400);
+}
+
+async function loadFaces(){
+  if(!sb) return;
+  var {data, error} = await sb.from('employees')
+    .select('id,auth_id,name,face_descriptor')
+    .eq('is_active', true)
+    .not('face_descriptor','is',null);
+  if(error || !data || !data.length){
+    faceMatcher = null;
+    setStatus('顔登録なし — 手動で職員を選択してください');
+    return;
+  }
+  empFaceMap = {};
+  var labeled = [];
+  data.forEach(function(e){
+    if(!e.face_descriptor) return;
+    empFaceMap[e.id] = { name:e.name, auth_id:e.auth_id };
+    var raw = e.face_descriptor;
+    var descs = Array.isArray(raw[0]) ? raw.map(function(d){ return new Float32Array(d); }) : [new Float32Array(raw)];
+    labeled.push(new faceapi.LabeledFaceDescriptors(e.id, descs));
+  });
+  faceMatcher = labeled.length ? new faceapi.FaceMatcher(labeled, THRESHOLD) : null;
+  setStatus(labeled.length ? labeled.length+'名 準備完了 — 顔をカメラに向けてください' : '顔登録なし');
+}
+
+window.reloadFaces = async function(){
+  setStatus('更新中...');
+  await loadFaces();
+};
+
+async function startCamera(){
+  var video = document.getElementById('video');
+  if(video.srcObject) return;
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}
+    });
+    video.srcObject = stream;
+    await new Promise(function(r){ video.onloadedmetadata = r; });
+    await video.play();
+    var dot = document.getElementById('camDot');
+    dot.classList.remove('off'); dot.classList.add('ok');
+    setStatus('顔をカメラに向けてください');
+    scheduleDetect();
+  } catch(e){
+    setStatus('カメラ起動失敗: '+e.message);
+  }
+}
+
+function stopCamera(){
+  if(detectTmo){ clearTimeout(detectTmo); detectTmo = null; }
+  var video = document.getElementById('video');
+  if(video && video.srcObject){
+    video.srcObject.getTracks().forEach(function(t){ t.stop(); });
+    video.srcObject = null;
+  }
+  var dot = document.getElementById('camDot');
+  if(dot){ dot.classList.remove('ok'); dot.classList.add('off'); }
+}
+
+function scheduleDetect(){
+  if(detectTmo) clearTimeout(detectTmo);
+  detectTmo = setTimeout(detectFrame, DETECT_INT);
+}
+
+async function detectFrame(){
+  if(!faceEnabled) return;
+  var video = document.getElementById('video');
+  if(!video || !video.srcObject || video.paused){ scheduleDetect(); return; }
+
+  var ov = document.getElementById('overlay');
+  ov.width  = video.videoWidth  || 320;
+  ov.height = video.videoHeight || 240;
+  var ctx = ov.getContext('2d');
+  ctx.clearRect(0, 0, ov.width, ov.height);
+  var guide = document.getElementById('faceGuide');
+
+  if(!faceMatcher){
+    if(guide) guide.className = 'face-guide';
+    updateConf(0);
+    scheduleDetect();
+    return;
+  }
+
+  var det;
+  try {
+    det = await faceapi
+      .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({minConfidence:0.5}))
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+  } catch(e){ scheduleDetect(); return; }
+
+  if(!det){
+    if(guide) guide.className = 'face-guide';
+    if(!processing) setStatus('顔をカメラに向けてください');
+    updateConf(0);
+    Object.keys(confirmCnt).forEach(function(k){ confirmCnt[k]=0; });
+    scheduleDetect();
+    return;
+  }
+
+  // 枠描画（ミラー反転）
+  var box = det.detection.box;
+  var mX  = ov.width - box.x - box.width;
+  var match = faceMatcher.findBestMatch(det.descriptor);
+  var conf  = Math.round((1 - match.distance) * 100);
+  updateConf(conf);
+
+  ctx.strokeStyle = match.label === 'unknown' ? 'rgba(245,158,11,.7)' : 'rgba(34,197,94,.85)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, mX, box.y, box.width, box.height, 6);
+
+  if(match.label === 'unknown'){
+    if(guide) guide.className = 'face-guide detecting';
+    setStatus('検出中... ('+conf+'%)');
+    Object.keys(confirmCnt).forEach(function(k){ confirmCnt[k]=0; });
+    scheduleDetect();
+    return;
+  }
+
+  var empId = match.label;
+  var now   = Date.now();
+  if(lastFacePunch[empId] && (now - lastFacePunch[empId]) < COOLDOWN){
+    var rem = Math.ceil((COOLDOWN - (now - lastFacePunch[empId])) / 1000);
+    setStatus((empFaceMap[empId]?empFaceMap[empId].name:'')+'さん — '+rem+'秒後に再認証可');
+    Object.keys(confirmCnt).forEach(function(k){ confirmCnt[k]=0; });
+    scheduleDetect();
+    return;
+  }
+
+  confirmCnt[empId] = (confirmCnt[empId]||0) + 1;
+  var info = empFaceMap[empId] || { name:'不明', auth_id:null };
+  if(guide) guide.className = 'face-guide detecting';
+  setStatus('認識中: '+info.name+' ('+conf+'%)  '+confirmCnt[empId]+'/'+CONFIRM_N);
+
+  if(confirmCnt[empId] >= CONFIRM_N){
+    confirmCnt[empId] = 0;
+    if(guide) guide.className = 'face-guide ok';
+    lastFacePunch[empId] = now;
+
+    // 従業員を自動選択 → 打刻種別ボタンを有効化
+    var faceEmp = allEmps.find(function(e){ return e.id === empId; });
+    if(faceEmp){
+      selectedEmp = faceEmp;
+      updateSelBanner();
+      enablePunchBtns();
+      var q = (document.getElementById('epSearch').value||'').trim().toLowerCase();
+      renderEmpList(q ? allEmps.filter(function(e){
+        return (e.name||'').toLowerCase().includes(q)||(e.department||'').toLowerCase().includes(q);
+      }) : allEmps);
+    }
+    showFaceRecResult(info.name);
+    setStatus(info.name+'さんを認識 — 打刻種別を選択してください');
+  }
+
+  scheduleDetect();
+}
+
+function showFaceRecResult(name){
+  document.getElementById('frrName').textContent = name;
+  document.getElementById('faceRecResult').classList.add('show');
+}
+function hideFaceRecResult(){
+  document.getElementById('faceRecResult').classList.remove('show');
+  var guide = document.getElementById('faceGuide');
+  if(guide) guide.className = 'face-guide';
+}
+
+// ══ Helpers ══════════════════════════════════════════
+function setStatus(msg){ var el=document.getElementById('camTxt'); if(el) el.textContent=msg; }
+
+function updateConf(pct){
+  var f=document.getElementById('confFill'); var p=document.getElementById('confPct');
+  if(f){ f.style.width=pct+'%'; f.style.background=pct>70?'var(--green)':pct>45?'var(--amber)':'var(--red)'; }
+  if(p) p.textContent=pct+'%';
+}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.stroke();
+}
+
+// ══ 起動 ════════════════════════════════════════════
+window.addEventListener('load', function(){
+  var check = setInterval(function(){
+    if(typeof faceapi !== 'undefined'){ clearInterval(check); boot(); }
+  }, 80);
+});
+</script>
+</body>
+</html>

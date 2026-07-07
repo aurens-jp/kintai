@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1e40af">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>勤怠管理｜スタッフ</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --pri:#1e40af;--pri-l:#dbeafe;--pri-d:#1e3a8a;
+  --suc:#16a34a;--suc-l:#dcfce7;
+  --dan:#dc2626;--dan-l:#fee2e2;
+  --war:#d97706;--war-l:#fef3c7;
+  --pur:#7c3aed;--pur-l:#ede9fe;
+  --bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;
+  --hh:54px;--nh:62px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--text);max-width:430px;margin:0 auto;min-height:100vh;overflow-x:hidden;position:relative}
+
+/* ── Header（非表示） ── */
+.hdr{display:none !important}
+
+/* ── フローティング戻るボタン ── */
+#floatBack{position:fixed;top:calc(var(--nh)+6px);left:10px;z-index:300;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:20px;padding:6px 14px 6px 8px;font-size:13px;font-weight:600;color:var(--pri);display:none;align-items:center;gap:2px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#floatBack.show{display:flex}
+#floatBack i{font-size:18px}
+
+/* ── Top Nav ── */
+.bnav{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nh);background:#fff;border-bottom:1px solid var(--border);display:flex;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;font-size:10px;color:var(--muted);cursor:pointer;padding:6px 0;position:relative;transition:color .15s}
+.bnav-btn i{font-size:22px;line-height:1}
+.bnav-btn.on{color:var(--pri)}
+.bnav-dot{position:absolute;top:6px;right:calc(50% - 14px);width:8px;height:8px;background:var(--dan);border-radius:50%;border:2px solid #fff}
+
+/* ── Page ── */
+.pg{display:none;padding-top:calc(var(--nh)+8px);padding-bottom:16px;min-height:100vh}
+.pg.on{display:block}
+.pg.no-hdr{padding-top:calc(var(--nh))}
+.pg.no-nav{padding-top:16px;padding-bottom:16px}
+.pg.full{padding-top:0;padding-bottom:0}
+
+/* ── Sections ── */
+.sec{padding:0 16px 12px}
+.sec-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:16px 16px 8px}
+
+/* ── Cards ── */
+.card-app{background:var(--card);border-radius:16px;padding:16px;margin:0 16px 12px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--border)}
+.card-app.p0{padding:0;overflow:hidden}
+.card-hero{background:var(--pri);border-radius:20px;padding:20px;margin:8px 16px 12px;color:#fff}
+
+/* ── List ── */
+.list-wrap{background:var(--card);border-radius:16px;margin:0 16px 12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.list-row{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.list-row:last-child{border-bottom:none}
+.list-row:active{background:#f8fafc}
+.list-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;margin-right:12px}
+.list-title{font-size:14px;font-weight:600;line-height:1.3}
+.list-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.list-right{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+.list-chev{font-size:16px;color:var(--border)}
+
+/* ── Badges ── */
+.badge-app{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.b-pend{background:var(--war-l);color:var(--war)}
+.b-appr{background:var(--suc-l);color:var(--suc)}
+.b-rej{background:var(--dan-l);color:var(--dan)}
+.b-blue{background:var(--pri-l);color:var(--pri)}
+.b-gray{background:#f1f5f9;color:var(--muted)}
+.b-pur{background:var(--pur-l);color:var(--pur)}
+
+/* ── Punch Buttons ── */
+.punch-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 12px}
+.pbtn{border:none;border-radius:14px;padding:10px 8px;font-size:14px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .1s,opacity .1s;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.pbtn i{font-size:22px}
+.pbtn:active{transform:scale(.96)}
+.pbtn-in{background:var(--pri);color:#fff}
+.pbtn-out{background:var(--dan);color:#fff}
+.pbtn-brk{background:var(--war);color:#fff}
+.pbtn-ret{background:var(--suc);color:#fff}
+.pbtn-go{background:#7c3aed;color:#fff}
+.pbtn-back{background:#0891b2;color:#fff}
+.pbtn.done{opacity:.45;pointer-events:none}
+
+/* ── Clock display ── */
+.clock-wrap{text-align:center;padding:24px 16px 8px}
+.clock-time{font-size:60px;font-weight:200;letter-spacing:-3px;color:var(--text);line-height:1}
+.clock-date{font-size:14px;color:var(--muted);margin-top:4px}
+.clock-status{display:inline-flex;align-items:center;gap:6px;background:var(--suc-l);color:var(--suc);border-radius:20px;padding:4px 14px;font-size:13px;font-weight:700;margin-top:10px}
+
+/* ── Calendar ── */
+.cal-wrap{padding:0 16px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:0 0 12px}
+.cal-nav span{font-size:17px;font-weight:800}
+.cal-nav button{background:none;border:1px solid var(--border);border-radius:10px;width:34px;height:34px;cursor:pointer;font-size:16px;color:var(--text)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dh{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0}
+.cal-dh.sun{color:var(--dan)}
+.cal-dh.sat{color:var(--pri)}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;position:relative;font-size:13px;font-weight:600;transition:background .1s}
+.cal-cell:active{background:#e2e8f0}
+.cal-cell .dn{line-height:1}
+.cal-cell .sb{font-size:8px;font-weight:800;border-radius:4px;padding:1px 3px;margin-top:2px;color:#fff;line-height:1.2}
+.cal-cell.sun .dn{color:var(--dan)}
+.cal-cell.sat .dn{color:var(--pri)}
+.cal-cell.tod{background:var(--pri)}
+.cal-cell.tod .dn{color:#fff}
+.cal-cell.off{background:#fee2e2}
+.cal-cell.wish{background:#f0fdf4}
+.cal-cell.other{opacity:.3}
+
+/* ── Login ── */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
+.login-logo{width:88px;height:88px;background:var(--pri);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:20px;box-shadow:0 8px 24px rgba(30,64,175,.35)}
+.login-title{font-size:24px;font-weight:800;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:36px}
+
+/* ── Forms ── */
+.f-group{margin-bottom:16px}
+.f-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;display:block}
+.f-ctrl{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:13px;font-size:15px;background:#fff;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s}
+.f-ctrl:focus{border-color:var(--pri)}
+.f-ctrl.err{border-color:var(--dan)}
+select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+
+/* ── Big buttons ── */
+.btn-app{width:100%;padding:15px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .1s,transform .1s}
+.btn-app:active{opacity:.85;transform:scale(.99)}
+.btn-pri{background:var(--pri);color:#fff}
+.btn-suc{background:var(--suc);color:#fff}
+.btn-dan{background:var(--dan);color:#fff}
+.btn-out{background:#fff;color:var(--pri);border:2px solid var(--pri)}
+.btn-gray{background:#f1f5f9;color:var(--text)}
+
+/* ── Stat cards ── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-card{background:#fff;border-radius:14px;padding:14px;text-align:center;border:1px solid var(--border)}
+.stat-val{font-size:26px;font-weight:800;line-height:1}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── Progress bar ── */
+.prog-bar{background:#e2e8f0;border-radius:6px;height:8px;overflow:hidden;margin:8px 0}
+.prog-fill{height:100%;border-radius:6px;background:var(--pri);transition:width .4s}
+
+/* ── Notice list ── */
+.notice-row{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.notice-row:last-child{border-bottom:none}
+.notice-row.unread .notice-title{font-weight:700}
+.notice-title{font-size:14px;margin-bottom:4px}
+.notice-meta{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.unread-dot{width:8px;height:8px;background:var(--dan);border-radius:50%;flex-shrink:0}
+
+/* ── GPS indicator ── */
+.gps-pill{display:inline-flex;align-items:center;gap:5px;background:var(--suc-l);color:var(--suc);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700}
+
+/* ── Timeline ── */
+.timeline{padding:0 16px}
+.tl-item{display:flex;gap:12px;margin-bottom:16px}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tl-line{position:relative}
+.tl-line::before{content:'';position:absolute;left:5px;top:16px;width:2px;height:calc(100% + 8px);background:var(--border)}
+.tl-content{flex:1}
+.tl-time{font-size:12px;color:var(--muted);font-weight:600}
+.tl-label{font-size:14px;font-weight:700}
+
+/* ── Toast ── */
+.app-toast{position:fixed;top:calc(var(--nh)+8px);left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.app-toast.show{opacity:1}
+
+/* ── Info rows ── */
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:13px;color:var(--muted)}
+.info-val{font-size:14px;font-weight:600;text-align:right}
+
+/* ── Avatar ── */
+.avatar{width:72px;height:72px;border-radius:50%;background:var(--pri-l);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:var(--pri);flex-shrink:0}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin:0 16px 16px}
+.tab-item{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer}
+.tab-item.on{color:var(--pri);border-bottom-color:var(--pri)}
+
+/* ── Scrollable ── */
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ── Leave bar ── */
+.leave-card{background:var(--card);border-radius:16px;padding:16px;margin:0 16px 12px;border:1px solid var(--border)}
+.leave-days{font-size:36px;font-weight:800;color:var(--pri);line-height:1}
+.leave-unit{font-size:14px;color:var(--muted);margin-left:4px}
+</style>
+</head>
+<body>
+
+<!-- フローティング戻るボタン -->
+<button id="floatBack" onclick="goBack()">
+  <i class="bi bi-chevron-left"></i><span data-i18n="common.back">戻る</span>
+</button>
+
+<!-- ══════ SCREENS ══════ -->
+
+<!-- ① ログイン -->
+<div class="pg full no-nav on" id="screen-login">
+  <div class="login-wrap">
+    <div class="login-logo">🕐</div>
+    <div class="login-title" data-i18n="login.title">勤怠管理</div>
+    <div class="login-sub" data-i18n="login.sub">スタッフポータル</div>
+    <div style="width:100%;max-width:340px">
+      <div class="f-group">
+        <label class="f-label" data-i18n="login.email">メールアドレス</label>
+        <input class="f-ctrl" type="email" id="staffEmail" placeholder="example@company.jp" autocomplete="email">
+      </div>
+      <div class="f-group">
+        <label class="f-label" data-i18n="login.pw">パスワード</label>
+        <input class="f-ctrl" type="password" id="staffPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input type="checkbox" id="rememberMe" style="width:16px;height:16px;cursor:pointer;accent-color:var(--pri)">
+        <label for="rememberMe" style="font-size:13px;color:var(--txt2);cursor:pointer">IDとパスワードを記憶する</label>
+      </div>
+      <div id="loginErr" style="color:#dc2626;font-size:12px;margin-bottom:8px;min-height:16px"></div>
+      <div style="margin-bottom:24px">
+        <button class="btn-app btn-pri" id="loginBtn" onclick="doLogin()" data-i18n="login.btn">ログイン</button>
+      </div>
+      <div style="text-align:center">
+        <a href="#" onclick="goScreen('screen-reset-pw');return false" style="font-size:13px;color:var(--pri);text-decoration:none" data-i18n="login.forgot">パスワードを忘れた方はこちら</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ② パスワード再設定 -->
+<div class="pg no-nav" id="screen-reset-pw">
+  <div style="padding:24px 16px 0">
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">パスワード再設定</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:28px">登録されたメールアドレスに再設定リンクを送信します。</div>
+    <div class="f-group">
+      <label class="f-label">メールアドレス</label>
+      <input class="f-ctrl" type="email" placeholder="example@company.jp">
+    </div>
+    <div style="margin-top:8px"><button class="btn-app btn-pri" onclick="showToast('送信しました')">送信する</button></div>
+    <div style="text-align:center;margin-top:16px"><a href="#" onclick="goScreen('screen-login');return false" style="font-size:13px;color:var(--muted);text-decoration:none">← ログインに戻る</a></div>
+  </div>
+</div>
+
+<!-- ③ ホーム -->
+<div class="pg" id="screen-home">
+  <div class="card-hero" style="padding:12px 16px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <div class="avatar" id="heroAvatar" style="width:38px;height:38px;font-size:16px;flex-shrink:0;border:2px solid rgba(255,255,255,.4)">山</div>
+      <div>
+        <div style="font-size:16px;font-weight:800;line-height:1.2" id="heroName">山田 太郎</div>
+        <div style="font-size:12px;opacity:.8" id="heroDept">総務部 ／ 正社員</div>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:12px">
+      <div>
+        <div style="font-size:10px;opacity:.75;margin-bottom:2px" data-i18n="home.today_shift">今日のシフト</div>
+        <div style="font-size:17px;font-weight:800" id="heroShift">9:00 〜 18:00</div>
+      </div>
+      <div style="font-size:11px;opacity:.75;margin-left:auto" id="heroShiftName" data-i18n="home.normal_work">通常勤務</div>
+    </div>
+  </div>
+  <!-- お知らせ (上部) -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:0 16px 8px">
+    <div class="sec-title" style="margin:0" data-i18n="home.notice">📢 お知らせ</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a href="#" onclick="goScreen('screen-notice-post');return false" style="font-size:12px;color:var(--pri);text-decoration:none;font-weight:600" data-i18n="notice.post_btn">✏️ 投稿</a>
+      <a href="#" onclick="goScreen('screen-notice');return false" style="font-size:12px;color:var(--muted);text-decoration:none" data-i18n="notice.see_all">すべて見る</a>
+    </div>
+  </div>
+  <div class="list-wrap" id="homeNoticeList">
+    <div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">読み込み中...</div>
+  </div>
+  <!-- 打刻ボタン（ホーム） -->
+  <div class="sec-title" style="margin-top:12px" data-i18n="home.punch_status">🖐️ 打刻</div>
+  <div class="punch-grid" style="padding:0 16px 8px">
+    <button class="pbtn pbtn-in"  id="hpbtn-in"  onclick="doPunch('出勤','本業')"><i class="bi bi-box-arrow-in-right"></i><span>出勤</span></button>
+    <button class="pbtn pbtn-out" id="hpbtn-out" onclick="doPunch('退勤','本業')"><i class="bi bi-box-arrow-left"></i><span>退勤</span></button>
+    <button class="pbtn pbtn-brk" onclick="doPunch('休憩開始','本業')"><i class="bi bi-cup-hot"></i><span>休憩開始</span></button>
+    <button class="pbtn pbtn-ret" onclick="doPunch('休憩終了','本業')"><i class="bi bi-arrow-return-left"></i><span>休憩終了</span></button>
+    <button class="pbtn pbtn-go"  onclick="doPunch('外出','本業')"><i class="bi bi-door-open"></i><span>外出</span></button>
+    <button class="pbtn pbtn-back" onclick="doPunch('戻り','本業')"><i class="bi bi-door-closed"></i><span>戻り</span></button>
+  </div>
+  <!-- 副業打刻（ホーム・副業機能ON時のみ） -->
+  <div id="sideJobPunchWrapHome" style="display:none;padding:0 16px 8px">
+    <div style="font-size:11px;font-weight:700;color:#4f46e5;margin-bottom:6px;letter-spacing:.04em">💼 副業打刻</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button class="pbtn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff" onclick="doPunch('出勤','副業')"><i class="bi bi-briefcase"></i><span>副業出勤</span></button>
+      <button class="pbtn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff" onclick="doPunch('退勤','副業')"><i class="bi bi-briefcase-fill"></i><span>副業退勤</span></button>
+    </div>
+  </div>
+  <!-- 打刻状況 -->
+  <div class="sec-title" data-i18n="home.punch_status">打刻状況</div>
+  <div class="card-app">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--muted)">2026年7月1日（水）</div>
+      <div class="gps-pill"><i class="bi bi-geo-alt-fill"></i> 本社</div>
+    </div>
+    <div class="timeline">
+      <div class="tl-item tl-line">
+        <div class="tl-dot" style="background:var(--pri)"></div>
+        <div class="tl-content"><div class="tl-time">09:03</div><div class="tl-label" data-i18n="punch.clock_in">出勤</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--border)"></div>
+        <div class="tl-content" style="color:var(--muted)"><div class="tl-time">--:--</div><div class="tl-label" data-i18n="punch.waiting_out">退勤待ち</div></div>
+      </div>
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn-app btn-out" style="padding:10px;font-size:13px" onclick="goScreen('screen-punch-history')"><i class="bi bi-clock-history"></i> <span data-i18n="home.history_btn">打刻履歴</span></button>
+    </div>
+  </div>
+  <!-- 申請状況 -->
+  <div class="sec-title" data-i18n="home.apply_status">申請状況</div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-apply-detail')">
+      <div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-file-text" style="color:var(--pri)"></i></div>
+      <div><div class="list-title">有給休暇申請</div><div class="list-sub">7月5日（土）</div></div>
+      <div class="list-right"><span class="badge-app b-pend" data-i18n="status.pending">審査中</span></div>
+    </div>
+    <div class="list-row" onclick="goScreen('screen-apply-detail')">
+      <div class="list-icon" style="background:var(--suc-l)"><i class="bi bi-file-check" style="color:var(--suc)"></i></div>
+      <div><div class="list-title" data-i18n="apply_type.overtime">残業申請</div><div class="list-sub">6月30日（月）</div></div>
+      <div class="list-right"><span class="badge-app b-appr" data-i18n="status.approved">承認済</span></div>
+    </div>
+  </div>
+  <div style="height:8px"></div>
+</div>
+
+<!-- ④ 打刻メイン -->
+<div class="pg" id="screen-punch">
+  <div class="clock-wrap">
+    <div class="clock-time" id="punchClock">09:14</div>
+    <div class="clock-date">2026年7月1日（水）</div>
+    <div class="clock-status"><i class="bi bi-circle-fill" style="font-size:8px"></i> 出勤中</div>
+  </div>
+  <!-- GPS -->
+  <div style="text-align:center;margin:8px 0 16px">
+    <div class="gps-pill"><i class="bi bi-geo-alt-fill"></i> 本社オフィス（認証済）</div>
+  </div>
+  <!-- 打刻ボタン -->
+  <div class="punch-grid">
+    <button class="pbtn pbtn-in" id="pbtn-main-in"  onclick="doPunch('出勤','本業')"><i class="bi bi-box-arrow-in-right"></i><span>出勤</span></button>
+    <button class="pbtn pbtn-out" id="pbtn-main-out" onclick="doPunch('退勤','本業')"><i class="bi bi-box-arrow-left"></i><span>退勤</span></button>
+    <button class="pbtn pbtn-brk" onclick="doPunch('休憩開始','本業')"><i class="bi bi-cup-hot"></i><span>休憩<br>開始</span></button>
+    <button class="pbtn pbtn-ret" onclick="doPunch('休憩終了','本業')"><i class="bi bi-arrow-return-left"></i><span>休憩<br>終了</span></button>
+    <button class="pbtn pbtn-go"  onclick="doPunch('外出','本業')"><i class="bi bi-door-open"></i><span>外出</span></button>
+    <button class="pbtn pbtn-back" onclick="doPunch('戻り','本業')"><i class="bi bi-door-closed"></i><span>戻り</span></button>
+  </div>
+  <!-- 副業打刻ボタン（副業機能ON時のみ表示） -->
+  <div id="sideJobPunchWrap" style="display:none;margin:12px 16px 0">
+    <div style="font-size:11px;font-weight:700;color:var(--pri);margin-bottom:6px;letter-spacing:.04em">💼 副業打刻</div>
+    <div class="punch-grid" style="grid-template-columns:1fr 1fr">
+      <button class="pbtn" id="pbtn-side-in"
+        style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff"
+        onclick="doPunch('出勤','副業')">
+        <i class="bi bi-briefcase"></i><span>副業<br>出勤</span>
+      </button>
+      <button class="pbtn"
+        style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff"
+        onclick="doPunch('退勤','副業')">
+        <i class="bi bi-briefcase-fill"></i><span>副業<br>退勤</span>
+      </button>
+    </div>
+  </div>
+  <!-- 写真撮影オプション -->
+  <div class="card-app" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+    <div><div style="font-size:13px;font-weight:600" data-i18n="punch.photo">写真撮影</div><div style="font-size:11px;color:var(--muted)" data-i18n="punch.photo_sub">打刻時に自撮り撮影</div></div>
+    <div style="position:relative;display:inline-block">
+      <input type="checkbox" id="photoToggle" checked style="width:44px;height:24px;appearance:none;background:var(--pri);border-radius:20px;cursor:pointer;transition:background .2s">
+    </div>
+  </div>
+</div>
+
+
+<!-- 副業申請画面 -->
+<div class="pg" id="screen-sidejob-req">
+  <div class="app-header">
+    <button class="back-btn" onclick="goScreen('screen-home')"><i class="bi bi-chevron-left"></i></button>
+    <div class="app-header-title">💼 副業申請</div>
+  </div>
+  <div style="padding:16px">
+    <div style="background:var(--pri-l,#eff6ff);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--pri);margin-bottom:16px">
+      副業を行う場合は事前に申請が必要です。承認後に副業打刻が利用できます。
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">副業先会社名 <span style="color:var(--err,#dc2626)">*</span></div>
+        <input type="text" id="sjCompanyName" class="inp-app" placeholder="例: 株式会社〇〇" style="width:100%;box-sizing:border-box">
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">業務内容</div>
+        <textarea id="sjJobDesc" rows="3" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border,#e2e8f0);border-radius:8px;font-size:13px;resize:none" placeholder="例: Webサイト制作・コンテンツ編集など"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:4px">開始予定日</div>
+          <input type="date" id="sjStartDate" class="inp-app" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:4px">終了予定日（任意）</div>
+          <input type="date" id="sjEndDate" class="inp-app" style="width:100%;box-sizing:border-box">
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">週の予定労働時間（時間）</div>
+        <input type="number" id="sjWeeklyHours" class="inp-app" min="0" max="40" placeholder="例: 10" style="width:120px">
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">申請理由</div>
+        <textarea id="sjReason" rows="3" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--border,#e2e8f0);border-radius:8px;font-size:13px;resize:none" placeholder="副業を希望する理由をご記入ください"></textarea>
+      </div>
+    </div>
+    <div id="sjErr" style="color:var(--err,#dc2626);font-size:12px;margin-top:8px;display:none"></div>
+    <button class="btn-app btn-pri" onclick="submitSideJobRequest()" style="width:100%;margin-top:20px;padding:14px">
+      <i class="bi bi-send"></i> 申請する
+    </button>
+    <div id="sjSuccess" style="display:none;text-align:center;margin-top:12px;padding:16px;background:#f0fdf4;border-radius:8px;color:#16a34a;font-size:13px;font-weight:700">
+      ✅ 申請を送信しました。承認をお待ちください。
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ 打刻確認モーダル風 -->
+<div class="pg" id="screen-punch-confirm">
+  <div style="padding:32px 24px;text-align:center">
+    <div style="font-size:64px;margin-bottom:16px">✅</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:8px" data-i18n="punch.complete">打刻完了</div>
+    <div style="font-size:15px;color:var(--muted);margin-bottom:4px" id="punchConfirmType">出勤</div>
+    <div style="font-size:36px;font-weight:200;margin:16px 0" id="punchConfirmTime">09:03</div>
+    <div class="gps-pill" style="margin-bottom:24px"><i class="bi bi-geo-alt-fill"></i> 本社オフィス</div>
+    <button class="btn-app btn-pri" onclick="goScreen('screen-home')" data-i18n="common.back_home">ホームに戻る</button>
+  </div>
+</div>
+
+<!-- ⑥ 打刻履歴 -->
+<div class="pg" id="screen-punch-history">
+  <div class="sec-title">2026年7月</div>
+  <div class="list-wrap">
+    <div class="list-row">
+      <div><div class="list-title">7月1日（水）</div><div class="list-sub">出勤 09:03 ／ 退勤 --:--</div></div>
+      <div class="list-right"><span class="badge-app b-blue" data-i18n="status.working">勤務中</span></div>
+    </div>
+    <div class="list-row">
+      <div><div class="list-title">6月30日（月）</div><div class="list-sub">出勤 08:58 ／ 退勤 19:10</div></div>
+      <div class="list-right" style="flex-direction:column;align-items:flex-end"><span style="font-size:13px;font-weight:700">10:12</span><span style="font-size:11px;color:var(--war)">残業2:10</span></div>
+    </div>
+    <div class="list-row">
+      <div><div class="list-title">6月27日（金）</div><div class="list-sub">出勤 09:01 ／ 退勤 18:03</div></div>
+      <div class="list-right"><span style="font-size:13px;font-weight:700">9:02</span></div>
+    </div>
+    <div class="list-row">
+      <div><div class="list-title">6月26日（木）</div><div class="list-sub">出勤 09:15 ／ 退勤 18:00</div></div>
+      <div class="list-right" style="flex-direction:column;align-items:flex-end"><span style="font-size:13px;font-weight:700">8:45</span><span style="font-size:11px;color:var(--war)">遅刻15分</span></div>
+    </div>
+    <div class="list-row" onclick="goScreen('screen-apply-punch')">
+      <div><div class="list-title">6月25日（水）</div><div class="list-sub" style="color:var(--dan)">退勤打刻なし</div></div>
+      <div class="list-right"><span class="badge-app b-rej">要修正</span><i class="bi bi-chevron-right list-chev"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ シフトカレンダー -->
+<div class="pg" id="screen-shift">
+  <div style="padding:8px 16px 0">
+    <div class="cal-nav">
+      <button onclick="showToast('前月')">&#9664;</button>
+      <span>2026年7月</span>
+      <button onclick="showToast('翌月')">&#9654;</button>
+    </div>
+  </div>
+  <div class="cal-wrap">
+    <div class="cal-grid">
+      <div class="cal-dh sun">日</div><div class="cal-dh">月</div><div class="cal-dh">火</div><div class="cal-dh">水</div><div class="cal-dh">木</div><div class="cal-dh">金</div><div class="cal-dh sat">土</div>
+      <!-- Week 1 -->
+      <div class="cal-cell sun"><div class="dn">1</div><div class="sb" style="background:#6b7280">休</div></div>
+      <div class="cal-cell tod" onclick="openShiftDetail('2026-07-02')"><div class="dn">2</div><div class="sb" style="background:#ffffff44">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-03')"><div class="dn">3</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-04')"><div class="dn">4</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-05')"><div class="dn">5</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell wish" onclick="openShiftDetail('2026-07-06')"><div class="dn">6</div><div class="sb" style="background:#16a34a">希</div></div>
+      <div class="cal-cell sat off"><div class="dn">7</div><div class="sb" style="background:#6b7280">休</div></div>
+      <!-- Week 2 -->
+      <div class="cal-cell sun off"><div class="dn">8</div><div class="sb" style="background:#6b7280">休</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-09')"><div class="dn">9</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-10')"><div class="dn">10</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-11')"><div class="dn">11</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-12')"><div class="dn">12</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-13')"><div class="dn">13</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell sat off"><div class="dn">14</div></div>
+      <!-- Week 3 -->
+      <div class="cal-cell sun off"><div class="dn">15</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-16')"><div class="dn">16</div><div class="sb" style="background:#7c3aed">E</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-17')"><div class="dn">17</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell off" onclick="goScreen('screen-wish-off')"><div class="dn">18</div><div class="sb" style="background:#dc2626">希休</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-19')"><div class="dn">19</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-20')"><div class="dn">20</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell sat off"><div class="dn">21</div></div>
+      <!-- Week 4 -->
+      <div class="cal-cell sun off"><div class="dn">22</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-23')"><div class="dn">23</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-24')"><div class="dn">24</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-25')"><div class="dn">25</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-26')"><div class="dn">26</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-27')"><div class="dn">27</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell sat off"><div class="dn">28</div></div>
+      <!-- Week 5 -->
+      <div class="cal-cell sun off"><div class="dn">29</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-30')"><div class="dn">30</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell" onclick="openShiftDetail('2026-07-31')"><div class="dn">31</div><div class="sb" style="background:#1e40af">N</div></div>
+      <div class="cal-cell other"></div><div class="cal-cell other"></div><div class="cal-cell other"></div><div class="cal-cell other"></div>
+    </div>
+  </div>
+  <!-- 凡例 -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px">
+    <div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:12px;height:12px;border-radius:3px;background:#1e40af"></div><span data-i18n="shift.normal">通常(N)</span></div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:12px;height:12px;border-radius:3px;background:#7c3aed"></div><span data-i18n="shift.early">早番(E)</span></div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:12px;height:12px;border-radius:3px;background:#dc2626"></div><span data-i18n="shift.wish_off">希望休</span></div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:12px;height:12px;border-radius:3px;background:#16a34a"></div><span data-i18n="shift.wish_work">希望出勤</span></div>
+  </div>
+  <div style="padding:0 16px 8px">
+    <button class="btn-app btn-out" onclick="goScreen('screen-shift-request')"><i class="bi bi-pencil-square"></i> <span data-i18n="shift.enter_wish">希望シフトを入力する</span></button>
+  </div>
+</div>
+
+<!-- ⑧ シフト詳細 -->
+<div class="pg" id="screen-shift-detail">
+  <div class="card-app" id="shiftDetailCard">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="shiftDetailDate">読み込み中...</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:12px" id="shiftDetailTitle">—</div>
+    <div id="shiftDetailRows"></div>
+  </div>
+  <!-- 同じシフトの職員 -->
+  <div class="sec-title">👥 同じシフトの職員</div>
+  <div class="card-app" id="shiftColleagueCard">
+    <div id="shiftColleagueList" style="color:var(--muted);font-size:13px;text-align:center;padding:12px">読み込み中...</div>
+  </div>
+  <div style="padding:0 16px"><button class="btn-app btn-out" onclick="goScreen('screen-apply-shift-change')"><i class="bi bi-arrow-left-right"></i> <span data-i18n="shift.apply_change">シフト変更を申請する</span></button></div>
+</div>
+
+<!-- ⑨ 希望シフト入力 -->
+<div class="pg" id="screen-shift-request">
+  <div class="sec-title">2026年7月 — 希望入力</div>
+  <div class="card-app">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">⚠️ 提出締切：2026年6月20日（土）23:59</div>
+    <!-- Simple date list for input -->
+    <div id="wishList">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:14px;font-weight:600">7月1日（日）</div><div style="font-size:11px;color:var(--muted)">公休</div></div>
+        <span class="badge-app b-gray">休日</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:14px;font-weight:600">7月2日（月）</div></div>
+        <select class="f-ctrl" style="width:130px;padding:8px 10px;font-size:13px">
+          <option>指定なし</option><option>出勤希望</option><option selected>希望休</option><option>A勤希望</option><option>E勤希望</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:14px;font-weight:600">7月3日（火）</div></div>
+        <select class="f-ctrl" style="width:130px;padding:8px 10px;font-size:13px">
+          <option selected>指定なし</option><option>出勤希望</option><option>希望休</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+        <div><div style="font-size:14px;font-weight:600">7月4日（水）</div></div>
+        <select class="f-ctrl" style="width:130px;padding:8px 10px;font-size:13px">
+          <option selected>指定なし</option><option>出勤希望</option><option>希望休</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="sec-title">コメント</div>
+  <div style="padding:0 16px">
+    <textarea class="f-ctrl" rows="3" placeholder="管理者へのメモ（例：午後は早めに上がりたいです）"></textarea>
+  </div>
+  <div style="padding:12px 16px"><button class="btn-app btn-pri" onclick="showToast('希望シフトを提出しました')">提出する</button></div>
+</div>
+
+<!-- ⑩ 希望休入力 -->
+<div class="pg" id="screen-wish-off">
+  <div class="card-app">
+    <div style="font-size:17px;font-weight:800;margin-bottom:16px">希望休入力 — 7月18日（金）</div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.type">種別</label>
+      <select class="f-ctrl">
+        <option selected>希望休</option><option>有給希望</option><option>出勤希望</option>
+      </select>
+    </div>
+    <div class="f-group">
+      <label class="f-label">勤務希望時間（任意）</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input class="f-ctrl" type="time" value="09:00">
+        <input class="f-ctrl" type="time" value="18:00">
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.comment">コメント</label>
+      <textarea class="f-ctrl" rows="2" placeholder="理由など（任意）">病院受診のため午後は休みを希望します</textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('登録しました');goBack()">登録する</button>
+  </div>
+</div>
+
+<!-- ⑪ 申請一覧 -->
+<div class="pg" id="screen-apply">
+  <div class="sec-title" data-i18n="apply.history_title">シフト申請・交換履歴</div>
+  <div class="list-wrap" id="myShiftRequestList">
+    <div class="list-row"><div class="list-sub" style="padding:4px 0;color:var(--muted)">読み込み中...</div></div>
+  </div>
+  <div style="padding:8px 16px">
+    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-new')"><i class="bi bi-plus-circle"></i> <span data-i18n="apply.new">新規申請</span></button>
+  </div>
+</div>
+
+<!-- ⑫ 新規申請選択 -->
+<div class="pg" id="screen-apply-new">
+  <div class="sec-title" data-i18n="apply_cat.leave">休暇申請</div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-apply-leave')"><div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-umbrella" style="color:var(--pri)"></i></div><div class="list-title" data-i18n="apply_type.paid_leave">有給休暇</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-half-leave')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-stop-circle" style="color:var(--pur)"></i></div><div class="list-title" data-i18n="apply_type.half_leave">半日休暇</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-hourly-leave')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-clock" style="color:var(--suc)"></i></div><div class="list-title" data-i18n="apply_type.hourly_leave">時間単位休暇</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-absence')"><div class="list-icon" style="background:var(--dan-l)"><i class="bi bi-calendar-x" style="color:var(--dan)"></i></div><div class="list-title" data-i18n="apply_type.absence">欠勤申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-late-early')"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-alarm" style="color:var(--war)"></i></div><div class="list-title" data-i18n="apply_type.late_early">遅刻・早退申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+  </div>
+  <div class="sec-title" data-i18n="apply_cat.other">その他申請</div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-apply-ot')"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-moon-stars" style="color:var(--war)"></i></div><div class="list-title">残業申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-holiday-work')"><div class="list-icon" style="background:var(--suc-l)"><i class="bi bi-calendar-check" style="color:var(--suc)"></i></div><div class="list-title" data-i18n="apply_type.holiday_work">休日出勤申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-punch')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-pen" style="color:var(--pur)"></i></div><div class="list-title" data-i18n="apply_type.punch_fix">打刻修正申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" id="sidejob-apply-row" onclick="goScreen('screen-sidejob-req')" style="display:none"><div class="list-icon" style="background:#ede9fe"><i class="bi bi-briefcase" style="color:#7c3aed"></i></div><div class="list-title">💼 副業申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-shift-wish');initWishCalendar()"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-calendar-heart" style="color:var(--war)"></i></div><div class="list-title" data-i18n="apply_type.shift_wish">シフト・休暇希望申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-shift-change')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-calendar-week" style="color:var(--suc)"></i></div><div class="list-title" data-i18n="apply_type.shift_change">シフト変更申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-shift-swap');loadSwapEmpList()"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-arrow-left-right" style="color:var(--pur)"></i></div><div class="list-title" data-i18n="apply_type.shift_swap">シフト交換申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+  </div>
+</div>
+
+<!-- ⑬ 有給申請 -->
+<div class="pg" id="screen-apply-leave">
+  <div class="card-app" style="background:var(--pri-l);border-color:var(--pri-l)">
+    <div style="font-size:12px;color:var(--pri);font-weight:700">有給残日数</div>
+    <div><span class="leave-days">12.5</span><span class="leave-unit">日</span></div>
+    <div class="prog-bar"><div class="prog-fill" style="width:62%"></div></div>
+    <div style="font-size:11px;color:var(--pri)">付与20日 ／ 消化7.5日</div>
+  </div>
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">取得区分</label>
+      <select class="f-ctrl"><option>全日</option><option>午前半休</option><option>午後半休</option><option>時間単位</option></select>
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.start_date">開始日</label>
+      <input class="f-ctrl" type="date" value="2026-07-05">
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.end_date">終了日</label>
+      <input class="f-ctrl" type="date" value="2026-07-05">
+    </div>
+    <div class="f-group">
+      <label class="f-label">理由（任意）</label>
+      <textarea class="f-ctrl" rows="2" placeholder="私用のため"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-app btn-gray" onclick="goBack()" style="flex:1">キャンセル</button>
+      <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')" style="flex:2">申請する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⑭ 半休申請 -->
+<div class="pg" id="screen-apply-half-leave">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">取得日</label>
+      <input class="f-ctrl" type="date" value="2026-07-10">
+    </div>
+    <div class="f-group">
+      <label class="f-label">区分</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;padding:14px;border:2px solid var(--pri);border-radius:13px;cursor:pointer;background:var(--pri-l)">
+          <input type="radio" name="half" checked style="accent-color:var(--pri)"><span style="font-weight:700;color:var(--pri)">午前半休</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:14px;border:1.5px solid var(--border);border-radius:13px;cursor:pointer">
+          <input type="radio" name="half"><span style="font-weight:700">午後半休</span>
+        </label>
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.reason">理由</label>
+      <textarea class="f-ctrl" rows="2" placeholder="通院のため"></textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ⑮ 時間休申請 -->
+<div class="pg" id="screen-apply-hourly-leave">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">取得日</label>
+      <input class="f-ctrl" type="date" value="2026-07-08">
+    </div>
+    <div class="f-group">
+      <label class="f-label">取得時間帯</label>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
+        <input class="f-ctrl" type="time" value="13:00">
+        <span style="color:var(--muted)">〜</span>
+        <input class="f-ctrl" type="time" value="15:00">
+      </div>
+    </div>
+    <div class="card-app" style="background:#f0fdf4;border-color:#bbf7d0;margin:0 0 16px">
+      <div style="font-size:12px;color:var(--suc);font-weight:700">取得単位：30分単位　／　最大：年8時間</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.reason">理由</label>
+      <textarea class="f-ctrl" rows="2" placeholder="通院のため"></textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ⑯ 残業申請 -->
+<div class="pg" id="screen-apply-ot">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">残業日</label>
+      <input class="f-ctrl" type="date" value="2026-07-02">
+    </div>
+    <div class="f-group">
+      <label class="f-label">予定残業時間</label>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
+        <input class="f-ctrl" type="time" value="18:00">
+        <span style="color:var(--muted)">〜</span>
+        <input class="f-ctrl" type="time" value="20:00">
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">残業理由</label>
+      <select class="f-ctrl"><option>業務上の必要</option><option>プロジェクト対応</option><option>繁忙期対応</option><option>その他</option></select>
+    </div>
+    <div class="f-group">
+      <label class="f-label">詳細・備考</label>
+      <textarea class="f-ctrl" rows="2" placeholder="月次報告書の作成対応のため"></textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ⑰ 休日出勤申請 -->
+<div class="pg" id="screen-apply-holiday-work">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">出勤日</label>
+      <input class="f-ctrl" type="date" value="2026-07-12">
+    </div>
+    <div class="f-group">
+      <label class="f-label">勤務時間</label>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
+        <input class="f-ctrl" type="time" value="09:00">
+        <span style="color:var(--muted)">〜</span>
+        <input class="f-ctrl" type="time" value="15:00">
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">振替休日</label>
+      <input class="f-ctrl" type="date">
+    </div>
+    <div class="f-group">
+      <label class="f-label">出勤理由</label>
+      <textarea class="f-ctrl" rows="2" placeholder="システムメンテナンス対応のため"></textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ⑱ 欠勤申請 -->
+<div class="pg" id="screen-apply-absence">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">欠勤日</label>
+      <input class="f-ctrl" type="date" value="2026-07-15">
+    </div>
+    <div class="f-group">
+      <label class="f-label">欠勤区分</label>
+      <select class="f-ctrl"><option>全日欠勤</option><option>午前欠勤</option><option>午後欠勤</option></select>
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.reason">理由</label>
+      <select class="f-ctrl"><option>病気・体調不良</option><option>家族の看護</option><option>冠婚葬祭</option><option>その他</option></select>
+    </div>
+    <div class="f-group">
+      <label class="f-label">詳細</label>
+      <textarea class="f-ctrl" rows="2" placeholder="発熱のため"></textarea>
+    </div>
+    <button class="btn-app btn-dan" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ⑲ 遅刻・早退申請 -->
+<div class="pg" id="screen-apply-late-early">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">申請種別</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:2px solid var(--war);border-radius:13px;background:var(--war-l);cursor:pointer">
+          <input type="radio" name="letype" checked style="accent-color:var(--war)"><span style="font-weight:700;color:var(--war)">遅刻</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:13px;cursor:pointer">
+          <input type="radio" name="letype"><span style="font-weight:700">早退</span>
+        </label>
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">対象日</label>
+      <input class="f-ctrl" type="date" value="2026-07-03">
+    </div>
+    <div class="f-group">
+      <label class="f-label">出勤（予定）時刻</label>
+      <input class="f-ctrl" type="time" value="10:30">
+    </div>
+    <div class="f-group">
+      <label class="f-label" data-i18n="form.reason">理由</label>
+      <textarea class="f-ctrl" rows="2" placeholder="電車遅延のため"></textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ⑳ 打刻修正申請 -->
+<div class="pg" id="screen-apply-punch">
+  <div style="padding:0 16px">
+    <div class="card-app" style="background:var(--dan-l);border-color:#fca5a5">
+      <div style="font-size:13px;color:var(--dan);font-weight:700"><i class="bi bi-exclamation-triangle"></i> 退勤打刻なし — 6月25日（水）</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">修正種別</label>
+      <select class="f-ctrl"><option>退勤打刻漏れ</option><option>出勤打刻漏れ</option><option>時刻修正</option></select>
+    </div>
+    <div class="f-group">
+      <label class="f-label">正しい退勤時刻</label>
+      <input class="f-ctrl" type="time" value="18:10">
+    </div>
+    <div class="f-group">
+      <label class="f-label">修正理由</label>
+      <textarea class="f-ctrl" rows="2" placeholder="打刻を忘れて退社してしまいました">打刻を忘れて退社してしまいました。</textarea>
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+  </div>
+</div>
+
+<!-- ㉑ シフト変更申請 -->
+<div class="pg" id="screen-apply-shift-change">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">変更希望日</label>
+      <input class="f-ctrl" type="date" id="shiftReqDate">
+    </div>
+    <div class="f-group">
+      <label class="f-label">希望開始時刻</label>
+      <input class="f-ctrl" type="time" id="shiftReqStart" value="09:00">
+    </div>
+    <div class="f-group">
+      <label class="f-label">希望終了時刻</label>
+      <input class="f-ctrl" type="time" id="shiftReqEnd" value="18:00">
+    </div>
+    <div class="f-group">
+      <label class="f-label">変更理由</label>
+      <textarea class="f-ctrl" rows="2" id="shiftReqReason" placeholder="医療機関受診のため"></textarea>
+    </div>
+    <div id="shiftReqErr" style="color:#dc2626;font-size:12px;margin-bottom:8px;min-height:16px"></div>
+    <button class="btn-app btn-pri" onclick="submitShiftRequest()">申請する</button>
+  </div>
+</div>
+
+<!-- シフト・休暇希望申請 -->
+<div class="pg" id="screen-apply-shift-wish">
+  <div style="padding:0 16px">
+    <!-- 注意書き -->
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+      <i class="bi bi-exclamation-triangle-fill" style="color:#d97706;font-size:18px;flex-shrink:0;margin-top:1px"></i>
+      <div style="font-size:12px;color:#92400e;line-height:1.6">
+        <div style="font-weight:700;margin-bottom:2px">ご注意ください</div>
+        希望に添えない場合があります。シフトが確定した際はアプリからご確認ください。
+      </div>
+    </div>
+    <!-- 月ナビ -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button onclick="wishPrevMonth()" style="border:none;background:var(--pri-l);color:var(--pri);font-size:20px;padding:6px 14px;border-radius:10px;cursor:pointer;font-weight:700">‹</button>
+      <div id="wishMonthLabel" style="font-size:17px;font-weight:800"></div>
+      <button onclick="wishNextMonth()" style="border:none;background:var(--pri-l);color:var(--pri);font-size:20px;padding:6px 14px;border-radius:10px;cursor:pointer;font-weight:700">›</button>
+    </div>
+    <!-- 曜日ヘッダー -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px">
+      <div style="font-size:11px;font-weight:700;color:#dc2626">日</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted)">月</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted)">火</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted)">水</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted)">木</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted)">金</div>
+      <div style="font-size:11px;font-weight:700;color:#3b82f6">土</div>
+    </div>
+    <!-- カレンダーグリッド -->
+    <div id="wishCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;margin-bottom:14px"></div>
+    <!-- 選択状況 -->
+    <div style="background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px">
+      <span style="color:var(--muted)">選択中：</span>
+      <strong id="wishSelectedCount" style="color:var(--pri)">0</strong>
+      <span style="color:var(--muted)">日</span>
+      <div id="wishSelectedDates" style="margin-top:4px;color:var(--pri);font-size:11px;line-height:1.8"></div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">理由（任意）</label>
+      <textarea class="f-ctrl" rows="2" id="wishReason" placeholder="私用のため、通院のため など"></textarea>
+    </div>
+    <div id="wishReqErr" style="color:#dc2626;font-size:12px;margin-bottom:8px;min-height:16px"></div>
+    <button class="btn-app btn-pri" onclick="submitShiftWish()">🌟 希望日を申請する</button>
+  </div>
+</div>
+
+<!-- ㉒ シフト交換申請 -->
+<div class="pg" id="screen-apply-shift-swap">
+  <div style="padding:0 16px">
+    <div class="f-group">
+      <label class="f-label">自分のシフト日（交換に出す日）</label>
+      <input class="f-ctrl" type="date" id="swapMyDate">
+    </div>
+    <div class="f-group">
+      <label class="f-label">交換相手</label>
+      <select class="f-ctrl" id="swapTargetEmp">
+        <option value="">選択してください</option>
+      </select>
+    </div>
+    <div class="f-group">
+      <label class="f-label">相手のシフト日（もらいたい日）</label>
+      <input class="f-ctrl" type="date" id="swapTargetDate">
+    </div>
+    <div class="f-group">
+      <label class="f-label">交換理由</label>
+      <textarea class="f-ctrl" rows="2" id="swapReason" placeholder="私用のため"></textarea>
+    </div>
+    <div id="swapReqErr" style="color:#dc2626;font-size:12px;margin-bottom:8px;min-height:16px"></div>
+    <button class="btn-app btn-pri" onclick="submitShiftSwap()">交換申請する</button>
+  </div>
+</div>
+
+<!-- ㉒-b シフト交換申請完了 -->
+<div class="pg" id="screen-swap-done">
+  <div style="padding:40px 24px;text-align:center">
+    <div style="font-size:72px;margin-bottom:16px">🔄</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:8px;color:var(--pri)">申請が完了しました</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:6px" id="swapDoneMsg">シフト交換申請を送信しました。</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:28px">管理者の承認をお待ちください。</div>
+    <div style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:24px;text-align:left" id="swapDoneDetail"></div>
+    <button class="btn-app btn-pri" onclick="goScreen('screen-home')">ホームに戻る</button>
+    <div style="margin-top:12px">
+      <a href="#" onclick="goScreen('screen-apply');return false" style="font-size:13px;color:var(--muted)">申請一覧を見る</a>
+    </div>
+  </div>
+</div>
+
+<!-- ㉓ 申請詳細 -->
+<div class="pg" id="screen-apply-detail">
+  <div class="card-app">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div><div style="font-size:18px;font-weight:800">有給休暇申請</div><div style="font-size:13px;color:var(--muted);margin-top:2px">申請番号：REQ-2026-0147</div></div>
+      <span class="badge-app b-pend" style="font-size:13px;padding:5px 14px">審査中</span>
+    </div>
+    <div class="info-row"><span class="info-key">取得日</span><span class="info-val">2026年7月5日（土）</span></div>
+    <div class="info-row"><span class="info-key">取得区分</span><span class="info-val">全日</span></div>
+    <div class="info-row"><span class="info-key">申請日時</span><span class="info-val">2026/07/01 10:32</span></div>
+    <div class="info-row"><span class="info-key">承認者</span><span class="info-val">田中 部長</span></div>
+  </div>
+  <!-- Approval flow -->
+  <div class="sec-title">承認状況</div>
+  <div class="card-app p0">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="width:32px;height:32px;background:var(--suc-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px">✅</div>
+      <div><div style="font-size:13px;font-weight:700">1次承認</div><div style="font-size:11px;color:var(--muted)">田中 課長 / 2026/07/01 11:20</div></div>
+      <span class="badge-app b-appr ms-auto">承認</span>
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <div style="width:32px;height:32px;background:var(--war-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px">⏳</div>
+      <div><div style="font-size:13px;font-weight:700">2次承認</div><div style="font-size:11px;color:var(--muted)">佐藤 部長 / 未承認</div></div>
+      <span class="badge-app b-pend ms-auto">審査中</span>
+    </div>
+  </div>
+  <div style="padding:0 16px 8px">
+    <button class="btn-app btn-gray" onclick="showToast('取り下げました');goScreen('screen-apply')">申請を取り下げる</button>
+  </div>
+</div>
+
+<!-- ㉓ 承認状況 -->
+<div class="pg" id="screen-approval-status">
+  <div class="stat-row" style="padding:0 16px 12px">
+    <div class="stat-card"><div class="stat-val" style="color:var(--war)">2</div><div class="stat-lbl">審査中</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--suc)">8</div><div class="stat-lbl">今月承認済</div></div>
+  </div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-apply-detail')">
+      <div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-umbrella" style="color:var(--pri)"></i></div>
+      <div style="flex:1"><div class="list-title">有給休暇 — 7月5日</div><div class="list-sub">2026/07/01 申請</div></div>
+      <span class="badge-app b-pend">審査中</span>
+    </div>
+    <div class="list-row" onclick="goScreen('screen-apply-detail')">
+      <div class="list-icon" style="background:var(--war-l)"><i class="bi bi-moon-stars" style="color:var(--war)"></i></div>
+      <div style="flex:1"><div class="list-title">残業申請 — 7月2日</div><div class="list-sub">2026/06/30 申請</div></div>
+      <span class="badge-app b-pend">審査中</span>
+    </div>
+    <div class="list-row" onclick="goScreen('screen-apply-detail')">
+      <div class="list-icon" style="background:var(--suc-l)"><i class="bi bi-check-circle" style="color:var(--suc)"></i></div>
+      <div style="flex:1"><div class="list-title">残業申請 — 6月30日</div><div class="list-sub">2026/06/29 申請</div></div>
+      <span class="badge-app b-appr">承認済</span>
+    </div>
+  </div>
+</div>
+
+<!-- ㉔ お知らせ一覧 -->
+<div class="pg" id="screen-notice">
+  <div style="padding:0 16px 8px;display:flex;justify-content:flex-end">
+    <button class="btn-app btn-pri" style="padding:8px 16px;font-size:13px" onclick="goScreen('screen-notice-post')">✏️ 投稿する</button>
+  </div>
+  <div class="list-wrap" id="noticeFullList">
+    <div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">読み込み中...</div>
+  </div>
+</div>
+
+<!-- ㉕ お知らせ詳細 -->
+<div class="pg" id="screen-notice-detail">
+  <div class="card-app" id="noticeDetailCard">
+    <div style="text-align:center;color:var(--muted);padding:24px">読み込み中...</div>
+  </div>
+</div>
+
+<!-- お知らせ投稿 -->
+<div class="pg" id="screen-notice-post">
+  <div style="padding:0 16px">
+    <div style="display:grid;gap:14px">
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px" data-i18n="notice.category">カテゴリ</div>
+        <select class="form-control" id="staffNoticeCat" style="height:44px;font-size:14px">
+          <option value="お知らせ">📢 お知らせ</option>
+          <option value="連絡事項">📝 連絡事項</option>
+          <option value="引継ぎ">🔁 引継ぎ</option>
+          <option value="重要">🚨 重要</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">タイトル <span style="color:var(--dan)">*</span></div>
+        <input type="text" class="form-control" id="staffNoticeTitle" placeholder="タイトルを入力" style="height:44px;font-size:14px">
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px" data-i18n="form.body">本文</div>
+        <textarea class="form-control" id="staffNoticeBody" rows="5" placeholder="内容を入力（任意）" style="font-size:14px;resize:none"></textarea>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px" data-i18n="notice.attach_photo">📷 写真添付（任意）</div>
+        <input type="file" id="staffNoticeImg" accept="image/*" onchange="staffPreviewImg(this)" style="display:none">
+        <button class="btn-app" style="background:#f1f5f9;color:var(--text);border:1px dashed var(--border);width:100%;padding:12px" onclick="document.getElementById('staffNoticeImg').click()">
+          <i class="bi bi-camera"></i> 写真を選択
+        </button>
+        <div id="staffImgPreview" style="margin-top:8px;text-align:center"></div>
+      </div>
+      <div id="staffNoticeErr" style="color:var(--dan);font-size:13px"></div>
+      <button class="btn-app btn-pri" style="padding:14px;font-size:15px;font-weight:700" onclick="submitStaffNotice()" data-i18n="notice.submit_btn">📢 投稿する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ㉖ 有給管理 -->
+<div class="pg" id="screen-leave">
+  <!-- Summary card -->
+  <div class="leave-card" style="margin:8px 16px 12px;background:linear-gradient(135deg,var(--pri),#3b82f6);color:#fff;border:none">
+    <div style="font-size:12px;opacity:.8;margin-bottom:4px">有給残日数</div>
+    <div><span style="font-size:48px;font-weight:800;line-height:1">12.5</span><span style="font-size:16px;opacity:.8;margin-left:6px">日</span></div>
+    <div class="prog-bar" style="margin:12px 0 8px;background:rgba(255,255,255,.3)"><div style="height:100%;border-radius:6px;background:#fff;width:62%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.8">
+      <span>付与：20日</span><span>消化：7.5日</span><span>消滅予定：0日</span>
+    </div>
+  </div>
+  <div class="stat-row" style="padding:0 16px 12px">
+    <div class="stat-card"><div class="stat-val" style="color:var(--pri)">0.5</div><div class="stat-lbl">時間有給残(h)</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--war)">7.5</div><div class="stat-lbl">消化日数</div></div>
+  </div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-leave-history')">
+      <div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-calendar-check" style="color:var(--pri)"></i></div>
+      <div class="list-title" data-i18n="leave.history">取得履歴</div>
+      <i class="bi bi-chevron-right list-chev ms-auto"></i>
+    </div>
+    <div class="list-row" onclick="goScreen('screen-leave-grant')">
+      <div class="list-icon" style="background:var(--suc-l)"><i class="bi bi-gift" style="color:var(--suc)"></i></div>
+      <div class="list-title" data-i18n="leave.grant_hist">付与履歴</div>
+      <i class="bi bi-chevron-right list-chev ms-auto"></i>
+    </div>
+    <div class="list-row" onclick="goScreen('screen-leave-expire')">
+      <div class="list-icon" style="background:var(--war-l)"><i class="bi bi-alarm" style="color:var(--war)"></i></div>
+      <div class="list-title" data-i18n="leave.expire">消滅予定</div>
+      <i class="bi bi-chevron-right list-chev ms-auto"></i>
+    </div>
+  </div>
+  <div style="padding:0 16px">
+    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-leave')"><i class="bi bi-plus-circle"></i> 有給申請する</button>
+  </div>
+</div>
+
+<!-- ㉗ 取得履歴 -->
+<div class="pg" id="screen-leave-history">
+  <div class="list-wrap">
+    <div class="list-row"><div style="flex:1"><div class="list-title">有給休暇</div><div class="list-sub">2026/07/05（土）全日</div></div><span style="font-size:13px;font-weight:700;color:var(--dan)">-1.0日</span></div>
+    <div class="list-row"><div style="flex:1"><div class="list-title">午前半休</div><div class="list-sub">2026/06/20（土）</div></div><span style="font-size:13px;font-weight:700;color:var(--dan)">-0.5日</span></div>
+    <div class="list-row"><div style="flex:1"><div class="list-title">有給休暇</div><div class="list-sub">2026/06/03〜06/04（2日）</div></div><span style="font-size:13px;font-weight:700;color:var(--dan)">-2.0日</span></div>
+    <div class="list-row"><div style="flex:1"><div class="list-title">時間有給</div><div class="list-sub">2026/05/15（水）13:00〜15:00</div></div><span style="font-size:13px;font-weight:700;color:var(--dan)">-2.0h</span></div>
+    <div class="list-row"><div style="flex:1"><div class="list-title">有給休暇</div><div class="list-sub">2026/05/02〜05/06（5日）</div></div><span style="font-size:13px;font-weight:700;color:var(--dan)">-5.0日</span></div>
+  </div>
+</div>
+
+<!-- ㉘ 付与履歴 -->
+<div class="pg" id="screen-leave-grant">
+  <div class="list-wrap">
+    <div class="list-row"><div style="flex:1"><div class="list-title">定期付与</div><div class="list-sub">2026/04/01 ／ 有効期限：2028/03/31</div></div><span style="font-size:13px;font-weight:700;color:var(--suc)">+20日</span></div>
+    <div class="list-row"><div style="flex:1"><div class="list-title">定期付与</div><div class="list-sub">2025/04/01 ／ 有効期限：2027/03/31</div></div><span style="font-size:13px;font-weight:700;color:var(--suc)">+18日</span></div>
+    <div class="list-row"><div style="flex:1"><div class="list-title">繰越</div><div class="list-sub">2025/04/01</div></div><span style="font-size:13px;font-weight:700;color:var(--suc)">+2日</span></div>
+  </div>
+</div>
+
+<!-- ㉙ 消滅予定 -->
+<div class="pg" id="screen-leave-expire">
+  <div class="card-app" style="background:var(--war-l);border-color:#fcd34d">
+    <div style="font-size:13px;font-weight:700;color:var(--war);margin-bottom:8px"><i class="bi bi-exclamation-triangle"></i> 消滅予定の有給があります</div>
+    <div style="font-size:13px;color:var(--text)">2027年3月31日に <strong>2日</strong> が消滅予定です。年度末前に取得をご検討ください。</div>
+  </div>
+  <div class="list-wrap">
+    <div class="list-row"><div style="flex:1"><div class="list-title">2025年度付与分（繰越）</div><div class="list-sub">消滅日：2027/03/31</div></div><span style="font-size:13px;font-weight:700;color:var(--war)">2日</span></div>
+  </div>
+  <div style="padding:0 16px">
+    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-leave')">有給を申請する</button>
+  </div>
+</div>
+
+<!-- ㉚ メニュー -->
+<div class="pg" id="screen-menu">
+  <!-- User info -->
+  <div style="display:flex;align-items:center;gap:14px;padding:16px;background:#fff;margin-bottom:8px;border-bottom:1px solid var(--border)">
+    <div class="avatar">山</div>
+    <div>
+      <div style="font-size:17px;font-weight:800">山田 太郎</div>
+      <div style="font-size:12px;color:var(--muted)">総務部 ／ 社員番号：EMP-001</div>
+      <div style="font-size:12px;color:var(--muted)">正社員 ／ 入社：2020年4月</div>
+    </div>
+  </div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-timecard')"><div class="list-icon" style="background:#f0f9ff"><i class="bi bi-table" style="color:var(--pri)"></i></div><div class="list-title" data-i18n="menu.timecard">勤務実績</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-approval-status')"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-check2-all" style="color:var(--war)"></i></div><div class="list-title" data-i18n="menu.approval">承認状況</div><span class="badge-app b-pend ms-auto">2件</span><i class="bi bi-chevron-right list-chev"></i></div>
+    <div class="list-row" onclick="goScreen('screen-leave')"><div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-umbrella" style="color:var(--pri)"></i></div><div class="list-title" data-i18n="menu.leave">有給管理</div><div class="list-right"><span style="font-size:12px;font-weight:700;color:var(--pri)">残12.5日</span><i class="bi bi-chevron-right list-chev"></i></div></div>
+  </div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-mypage')"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-person-circle" style="color:var(--muted)"></i></div><div class="list-title" data-i18n="menu.mypage">マイページ</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-qualification')"><div class="list-icon" style="background:var(--suc-l)"><i class="bi bi-award" style="color:var(--suc)"></i></div><div class="list-title" data-i18n="menu.skill">資格・スキル</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-notif-settings')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-bell" style="color:var(--pur)"></i></div><div class="list-title" data-i18n="menu.notif">通知設定</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-settings')"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-gear" style="color:var(--muted)"></i></div><div class="list-title" data-i18n="menu.settings">Setting</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+  </div>
+  <div style="padding:8px 16px">
+    <button class="btn-app" style="background:#f1f5f9;color:var(--dan);font-weight:700" onclick="goScreen('screen-login')" data-i18n="menu.logout"><i class="bi bi-box-arrow-right"></i> ログアウト</button>
+  </div>
+</div>
+
+<!-- ㉛ マイページ -->
+<div class="pg" id="screen-mypage">
+  <div style="display:flex;flex-direction:column;align-items:center;padding:20px;background:#fff;margin-bottom:8px;border-bottom:1px solid var(--border)">
+    <div class="avatar" style="width:88px;height:88px;font-size:40px;margin-bottom:12px">山</div>
+    <div style="font-size:20px;font-weight:800">山田 太郎</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">総務部 ／ 正社員</div>
+  </div>
+  <div class="card-app p0">
+    <div class="info-row" style="padding:12px 16px"><span class="info-key" data-i18n="profile.emp_no">社員番号</span><span class="info-val">EMP-001</span></div>
+    <div class="info-row" style="padding:12px 16px"><span class="info-key">所属部署</span><span class="info-val">総務部</span></div>
+    <div class="info-row" style="padding:12px 16px"><span class="info-key">役職</span><span class="info-val">主任</span></div>
+    <div class="info-row" style="padding:12px 16px"><span class="info-key">雇用区分</span><span class="info-val">正社員</span></div>
+    <div class="info-row" style="padding:12px 16px"><span class="info-key" data-i18n="profile.hire_date">入社日</span><span class="info-val">2020年4月1日</span></div>
+    <div class="info-row" style="padding:12px 16px"><span class="info-key">メール</span><span class="info-val" style="font-size:12px">yamada@company.jp</span></div>
+    <div class="info-row" style="padding:12px 16px"><span class="info-key">電話</span><span class="info-val">090-0000-0000</span></div>
+  </div>
+  <div style="padding:0 16px">
+    <button class="btn-app btn-out" onclick="goScreen('screen-profile-edit')"><i class="bi bi-pencil"></i> プロフィールを編集する</button>
+  </div>
+</div>
+
+<!-- ㉜ プロフィール編集 -->
+<div class="pg" id="screen-profile-edit">
+  <div style="padding:0 16px">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0">
+      <div class="avatar" style="width:72px;height:72px;font-size:32px;position:relative;cursor:pointer" onclick="showToast('写真を変更')">
+        山
+        <div style="position:absolute;bottom:0;right:0;background:var(--pri);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;border:2px solid #fff"><i class="bi bi-camera"></i></div>
+      </div>
+    </div>
+    <div class="f-group"><label class="f-label">氏名（変更不可）</label><input class="f-ctrl" value="山田 太郎" disabled style="background:#f1f5f9"></div>
+    <div class="f-group"><label class="f-label">電話番号</label><input class="f-ctrl" type="tel" value="090-0000-0000"></div>
+    <div class="f-group"><label class="f-label">緊急連絡先</label><input class="f-ctrl" type="tel" placeholder="090-0000-0000"></div>
+    <div class="f-group"><label class="f-label">通勤方法</label><select class="f-ctrl"><option>電車</option><option>バス</option><option>車</option><option>自転車</option><option>徒歩</option></select></div>
+    <div class="f-group"><label class="f-label">通勤時間（分）</label><input class="f-ctrl" type="number" value="35"></div>
+    <button class="btn-app btn-pri" onclick="showToast('更新しました');goBack()">保存する</button>
+  </div>
+</div>
+
+<!-- ㉝ パスワード変更 -->
+<div class="pg" id="screen-password">
+  <div style="padding:0 16px">
+    <div class="f-group"><label class="f-label">現在のパスワード</label><input class="f-ctrl" type="password" placeholder="••••••••"></div>
+    <div class="f-group"><label class="f-label">新しいパスワード</label><input class="f-ctrl" type="password" placeholder="8文字以上・英数字混在"></div>
+    <div class="f-group"><label class="f-label">新しいパスワード（確認）</label><input class="f-ctrl" type="password" placeholder="••••••••"></div>
+    <div style="background:#f8fafc;border-radius:12px;padding:12px;font-size:12px;color:var(--muted);margin-bottom:16px">
+      ・8文字以上<br>・英字（大文字/小文字）と数字を含む<br>・記号を含めるとより安全です
+    </div>
+    <button class="btn-app btn-pri" onclick="showToast('パスワードを変更しました');goBack()">変更する</button>
+  </div>
+</div>
+
+<!-- ㉞ 通知設定 -->
+<div class="pg" id="screen-notif-settings">
+  <div class="card-app p0">
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title" data-i18n="notif.punch_reminder">打刻リマインダー</div><div class="list-sub">出勤・退勤時刻にプッシュ通知</div></div>
+      <input type="checkbox" checked style="width:44px;height:24px;appearance:none;background:var(--pri);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title">申請状況通知</div><div class="list-sub">承認・差戻し時に通知</div></div>
+      <input type="checkbox" checked style="width:44px;height:24px;appearance:none;background:var(--pri);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title">シフト確定通知</div><div class="list-sub">翌月シフト確定時に通知</div></div>
+      <input type="checkbox" checked style="width:44px;height:24px;appearance:none;background:var(--pri);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title" data-i18n="notif.notice">お知らせ通知</div><div class="list-sub">新着お知らせ時に通知</div></div>
+      <input type="checkbox" style="width:44px;height:24px;appearance:none;background:var(--border);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title">有給消滅警告</div><div class="list-sub">消滅30日前に通知</div></div>
+      <input type="checkbox" checked style="width:44px;height:24px;appearance:none;background:var(--pri);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+  </div>
+</div>
+
+<!-- ㉟ 設定 -->
+<div class="pg" id="screen-settings">
+  <div class="list-wrap">
+    <div class="list-row" onclick="goScreen('screen-password')"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-key" style="color:var(--muted)"></i></div><div class="list-title" data-i18n="settings.pw">パスワード変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-notif-settings')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-bell" style="color:var(--pur)"></i></div><div class="list-title" data-i18n="settings.notif">通知設定</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+  </div>
+  <!-- 言語設定 -->
+  <div class="list-wrap">
+    <div style="padding:12px 16px 6px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em" data-i18n="settings.lang">言語設定 / Language</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 12px">
+      <button onclick="setLang('ja')" id="langBtn-ja" class="btn-app" style="font-size:14px;font-weight:700;padding:12px 8px;border:2px solid var(--pri);background:var(--pri-l);color:var(--pri)">🇯🇵 日本語</button>
+      <button onclick="setLang('en')" id="langBtn-en" class="btn-app" style="font-size:14px;font-weight:700;padding:12px 8px;border:2px solid var(--border);background:#fff;color:var(--text)">🇺🇸 English</button>
+      <button onclick="setLang('vi')" id="langBtn-vi" class="btn-app" style="font-size:14px;font-weight:700;padding:12px 8px;border:2px solid var(--border);background:#fff;color:var(--text)">🇻🇳 Tiếng Việt</button>
+      <button onclick="setLang('zh')" id="langBtn-zh" class="btn-app" style="font-size:14px;font-weight:700;padding:12px 8px;border:2px solid var(--border);background:#fff;color:var(--text)">🇨🇳 中文</button>
+    </div>
+  </div>
+  <div class="list-wrap">
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title" data-i18n="settings.dark">ダークモード</div></div>
+      <input type="checkbox" style="width:44px;height:24px;appearance:none;background:var(--border);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+    <div class="list-row" style="cursor:default">
+      <div style="flex:1"><div class="list-title" data-i18n="settings.bio">バイオメトリクス認証</div><div class="list-sub">Face ID / 指紋でログイン</div></div>
+      <input type="checkbox" checked style="width:44px;height:24px;appearance:none;background:var(--pri);border-radius:20px;cursor:pointer;flex-shrink:0">
+    </div>
+  </div>
+  <div style="padding:8px 16px;text-align:center">
+    <div style="font-size:12px;color:var(--muted)" data-i18n="settings.ver">バージョン 1.0.0</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">© 2026 Company Inc.</div>
+  </div>
+</div>
+
+<!-- ㊱ 資格・スキル -->
+<div class="pg" id="screen-qualification">
+  <div class="list-wrap">
+    <div class="list-row"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-award" style="color:var(--war)"></i></div><div><div class="list-title">日商簿記2級</div><div class="list-sub">取得：2019年6月</div></div><span class="badge-app b-appr ms-auto">認定済</span></div>
+    <div class="list-row"><div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-award" style="color:var(--pri)"></i></div><div><div class="list-title">ITパスポート</div><div class="list-sub">取得：2020年10月</div></div><span class="badge-app b-appr ms-auto">認定済</span></div>
+    <div class="list-row"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-plus-circle" style="color:var(--muted)"></i></div><div class="list-title">資格を追加する</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+  </div>
+</div>
+
+<!-- ㊲ 勤務実績 -->
+<div class="pg" id="screen-timecard">
+  <div class="card-app" style="padding:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button onclick="showToast('前月')" style="border:none;background:none;font-size:20px;color:var(--muted)">&#9664;</button>
+      <span style="font-size:15px;font-weight:800">2026年7月</span>
+      <button onclick="showToast('翌月')" style="border:none;background:none;font-size:20px;color:var(--muted)">&#9654;</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-val" style="color:var(--pri)">3</div><div class="stat-lbl">出勤日数</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--war)">2.0h</div><div class="stat-lbl">残業時間</div></div>
+    </div>
+  </div>
+  <div class="list-wrap">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:8px 16px;font-size:11px;font-weight:700;color:var(--muted);background:#f8fafc;border-bottom:1px solid var(--border)">
+      <span>日付</span><span style="text-align:center">出勤</span><span style="text-align:center">退勤</span><span style="text-align:right">勤務時間</span>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center">
+      <div><div style="font-size:13px;font-weight:600">7/1（水）</div><div style="font-size:10px;color:var(--suc)">勤務中</div></div>
+      <span style="font-size:13px;text-align:center">09:03</span>
+      <span style="font-size:13px;text-align:center;color:var(--muted)">--:--</span>
+      <span style="font-size:12px;text-align:right;color:var(--muted)">--:--</span>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center">
+      <div><div style="font-size:13px;font-weight:600">6/30（月）</div></div>
+      <span style="font-size:13px;text-align:center">08:58</span>
+      <span style="font-size:13px;text-align:center">19:10</span>
+      <span style="font-size:12px;text-align:right;font-weight:700">10:12</span>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;align-items:center">
+      <div><div style="font-size:13px;font-weight:600">6/27（金）</div></div>
+      <span style="font-size:13px;text-align:center">09:01</span>
+      <span style="font-size:13px;text-align:center">18:03</span>
+      <span style="font-size:12px;text-align:right;font-weight:700">9:02</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ BOTTOM NAV ══════ -->
+<div class="bnav" id="bnav">
+  <button class="bnav-btn on" id="nav-home" onclick="navTo('screen-home','ホーム','nav-home')">
+    <i class="bi bi-house-fill"></i><span data-i18n="nav.home">ホーム</span>
+  </button>
+  <button class="bnav-btn" id="nav-punch" onclick="navTo('screen-punch','打刻','nav-punch')">
+    <i class="bi bi-fingerprint"></i><span data-i18n="nav.punch">打刻</span>
+  </button>
+  <button class="bnav-btn" id="nav-shift" onclick="navTo('screen-shift','シフト','nav-shift')">
+    <i class="bi bi-calendar3"></i><span data-i18n="nav.shift">シフト</span>
+  </button>
+  <button class="bnav-btn" id="nav-apply" onclick="navTo('screen-apply','申請','nav-apply')" style="position:relative">
+    <i class="bi bi-file-earmark-text"></i><span data-i18n="nav.apply">申請</span>
+    <div class="bnav-dot"></div>
+  </button>
+  <button class="bnav-btn" id="nav-notice" onclick="navTo('screen-notice','お知らせ','nav-notice')" style="position:relative">
+    <i class="bi bi-bell"></i><span data-i18n="nav.notice">お知らせ</span>
+    <div class="bnav-dot" id="noticeDot" style="display:none"></div>
+  </button>
+  <button class="bnav-btn" id="nav-menu" onclick="navTo('screen-menu','メニュー','nav-menu')">
+    <i class="bi bi-grid-3x3-gap-fill"></i><span data-i18n="nav.menu">メニュー</span>
+  </button>
+</div>
+
+<!-- Toast -->
+<div class="app-toast" id="toast"></div>
+
+<script>
+// ── 画面履歴スタック ──
+var _history = [];
+var _navScreens = {
+  'screen-home':'nav-home',
+  'screen-punch':'nav-punch',
+  'screen-shift':'nav-shift',
+  'screen-apply':'nav-apply',
+  'screen-notice':'nav-notice',
+  'screen-menu':'nav-menu'
+};
+var _navTitles = {
+  'screen-home':'ホーム','screen-punch':'打刻','screen-shift':'シフト',
+  'screen-apply':'申請','screen-menu':'メニュー'
+};
+var _titles = {
+  'screen-login':'ログイン','screen-reset-pw':'パスワード再設定',
+  'screen-home':'ホーム','screen-punch':'打刻','screen-punch-confirm':'打刻完了',
+  'screen-punch-history':'打刻履歴','screen-shift':'シフト',
+  'screen-shift-detail':'シフト詳細','screen-shift-request':'希望シフト入力',
+  'screen-wish-off':'希望休入力','screen-apply':'申請','screen-apply-new':'申請種別選択',
+  'screen-apply-leave':'有給申請','screen-apply-half-leave':'半日休暇申請',
+  'screen-apply-hourly-leave':'時間単位休暇申請','screen-apply-ot':'残業申請',
+  'screen-apply-holiday-work':'休日出勤申請','screen-apply-absence':'欠勤申請',
+  'screen-apply-late-early':'遅刻・早退申請','screen-apply-punch':'打刻修正申請',
+  'screen-apply-shift-wish':'シフト・休暇希望申請','screen-apply-shift-change':'シフト変更申請','screen-apply-shift-swap':'シフト交換申請','screen-apply-detail':'申請詳細',
+  'screen-approval-status':'承認状況',
+  'screen-notice':'お知らせ','screen-notice-detail':'お知らせ詳細','screen-notice-post':'お知らせ投稿',
+  'screen-leave':'有給管理','screen-leave-history':'取得履歴',
+  'screen-leave-grant':'付与履歴','screen-leave-expire':'消滅予定',
+  'screen-menu':'メニュー','screen-mypage':'マイページ',
+  'screen-profile-edit':'プロフィール編集','screen-password':'パスワード変更',
+  'screen-notif-settings':'通知設定','screen-settings':'設定',
+  'screen-qualification':'資格・スキル','screen-timecard':'勤務実績'
+};
+
+function goScreen(id){
+  var cur = document.querySelector('.pg.on');
+  if(cur) _history.push(cur.id);
+
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  var pg = document.getElementById(id);
+  if(!pg) return;
+  pg.classList.add('on');
+
+  // 副業機能の表示制御
+  var _sjEnabled = localStorage.getItem('sidejob_enabled')==='1';
+  if(id==='screen-punch'){
+    var wrap = document.getElementById('sideJobPunchWrap');
+    if(wrap) wrap.style.display = _sjEnabled?'':'none';
+  }
+  if(id==='screen-home'){
+    var wrapHome = document.getElementById('sideJobPunchWrapHome');
+    if(wrapHome) wrapHome.style.display = _sjEnabled?'':'none';
+    var row = document.getElementById('sidejob-apply-row');
+    if(row) row.style.display = _sjEnabled?'':'none';
+  }
+  if(id==='screen-apply'){
+    var row = document.getElementById('sidejob-apply-row');
+    if(row) row.style.display = _sjEnabled?'':'none';
+  }
+
+  var isNavRoot = !!_navScreens[id];
+  var isLogin = id==='screen-login'||id==='screen-reset-pw'||id==='screen-punch-confirm';
+  if(id==='screen-login') setTimeout(restoreLoginCredentials, 0);
+  if(id==='screen-home') setTimeout(loadHomeNotices, 0);
+  if(id==='screen-notice') setTimeout(loadAllNotices, 0);
+
+  // ボトムナビ表示制御
+  var bnav = document.getElementById('bnav');
+  if(bnav) bnav.style.display = isLogin ? 'none' : 'flex';
+
+  // フローティング戻るボタン制御
+  var fb = document.getElementById('floatBack');
+  if(fb) fb.classList.toggle('show', !isNavRoot && !isLogin);
+
+  // ナビアクティブ更新
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('on'));
+  var navId = _navScreens[id];
+  if(navId) document.getElementById(navId).classList.add('on');
+
+  window.scrollTo(0,0);
+}
+
+function navTo(screenId, title, navId){
+  _history = [];
+  goScreen(screenId);
+}
+
+function goBack(){
+  if(_history.length){
+    var prev = _history.pop();
+    document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+    var pg = document.getElementById(prev);
+    if(pg) pg.classList.add('on');
+    var isNavRoot = !!_navScreens[prev];
+    var fb = document.getElementById('floatBack');
+    if(fb) fb.classList.toggle('show', !isNavRoot);
+    document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('on'));
+    var navId = _navScreens[prev];
+    if(navId) document.getElementById(navId).classList.add('on');
+    window.scrollTo(0,0);
+  }
+}
+
+async function doPunch(type, jobType){
+  if(!jobType) jobType = '本業';
+  var label = jobType==='副業' ? '副業 '+type : type;
+  document.getElementById('punchConfirmType').textContent = label;
+  var now = new Date();
+  document.getElementById('punchConfirmTime').textContent =
+    now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  goScreen('screen-punch-confirm');
+  // Supabase INSERT
+  if(sb && _myAuthId){
+    var payload = {
+      user_id: _myAuthId,
+      punch_type: type,
+      job_type: jobType,
+      punched_at: new Date().toISOString()
+    };
+    var {error} = await sb.from('punch_records').insert(payload);
+    if(error) showToast('打刻エラー: '+error.message);
+    else { loadTodayPunch(); loadHomeNotices(); }
+  }
+}
+
+async function submitSideJobRequest(){
+  var company = (document.getElementById('sjCompanyName')||{}).value||'';
+  var errEl = document.getElementById('sjErr');
+  if(!company.trim()){
+    if(errEl){errEl.textContent='副業先会社名を入力してください';errEl.style.display='';}
+    return;
+  }
+  if(errEl) errEl.style.display='none';
+  var payload = {
+    user_id: _myAuthId,
+    company_name: company.trim(),
+    job_description: (document.getElementById('sjJobDesc')||{}).value||null,
+    start_date: (document.getElementById('sjStartDate')||{}).value||null,
+    end_date:   (document.getElementById('sjEndDate')||{}).value||null,
+    weekly_hours: parseFloat((document.getElementById('sjWeeklyHours')||{}).value)||0,
+    reason: (document.getElementById('sjReason')||{}).value||null,
+    status: 'pending'
+  };
+  var {error} = await sb.from('side_job_requests').insert(payload);
+  if(error){
+    if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';}
+    return;
+  }
+  var succ = document.getElementById('sjSuccess');
+  if(succ) succ.style.display='';
+  showToast('副業申請を送信しました');
+}
+
+// Clock update
+function updateClock(){
+  var now = new Date();
+  var t = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var el = document.getElementById('punchClock');
+  if(el) el.textContent = t;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// Toast
+var _toastTimer;
+function showToast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ── Supabase 初期化 ──
+var SB_URL = localStorage.getItem('sb_url') || 'https://judzjxzmurlqchmuakod.supabase.co';
+var SB_KEY = localStorage.getItem('sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1ZHpqeHptdXJscWNobXVha29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjg1NTYsImV4cCI6MjA5NzMwNDU1Nn0.uFcLqB9UVhTx3eAebSPjWw0Tdlt5ZHSloYxjcLLVdMs';
+var sb = null;
+var _myEmpId = null;   // employees.id
+var _myAuthId = null;  // auth.users.id
+
+function initSb(){
+  if(window.supabase && SB_URL && SB_KEY){
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+  }
+}
+
+// ── ログイン画面の保存済み認証情報を復元 ──
+function restoreLoginCredentials(){
+  try {
+    var saved = localStorage.getItem('staff_remember');
+    if(!saved) return;
+    var creds = JSON.parse(saved);
+    var emailEl = document.getElementById('staffEmail');
+    var pwEl    = document.getElementById('staffPassword');
+    var remEl   = document.getElementById('rememberMe');
+    if(emailEl && creds.email) emailEl.value = creds.email;
+    if(pwEl    && creds.pw)    pwEl.value    = creds.pw;
+    if(remEl)                  remEl.checked  = true;
+  } catch(e){}
+}
+
+// ── ログイン ──
+async function doLogin(){
+  if(!sb) initSb();
+  if(!sb){ showToast('接続エラー'); return; }
+  var email = (document.getElementById('staffEmail')||{}).value.trim();
+  var pw    = (document.getElementById('staffPassword')||{}).value;
+  var remember = (document.getElementById('rememberMe')||{}).checked;
+  var errEl = document.getElementById('loginErr');
+  if(errEl) errEl.textContent = '';
+  if(!email||!pw){ if(errEl) errEl.textContent='メールとパスワードを入力してください'; return; }
+  var btn = document.getElementById('loginBtn');
+  if(btn){ btn.disabled=true; btn.textContent='ログイン中...'; }
+  var {data, error} = await sb.auth.signInWithPassword({email, password:pw});
+  if(btn){ btn.disabled=false; btn.textContent='ログイン'; }
+  if(error){
+    if(errEl) errEl.textContent='メールまたはパスワードが違います';
+    return;
+  }
+  // 記憶チェックの処理
+  if(remember){
+    localStorage.setItem('staff_remember', JSON.stringify({email:email, pw:pw}));
+  } else {
+    localStorage.removeItem('staff_remember');
+  }
+  _myAuthId = data.user.id;
+  // employees レコードを取得
+  var {data:emp} = await sb.from('employees').select('id,name,department,role').eq('auth_id',_myAuthId).eq('is_active',true).maybeSingle();
+  if(emp){
+    _myEmpId = emp.id;
+    // ホームのヒーローカードを更新
+    var nameEl = document.getElementById('heroName');
+    if(nameEl) nameEl.textContent = emp.name||'';
+    var deptEl = document.getElementById('heroDept');
+    if(deptEl) deptEl.textContent = (emp.department||'')+'　'+(emp.role||'一般');
+    var avatarEl = document.getElementById('heroAvatar');
+    if(avatarEl) avatarEl.textContent = (emp.name||'?')[0];
+  }
+  showToast('ログインしました');
+  setTimeout(function(){ goScreen('screen-home'); }, 400);
+}
+
+// ── 申請一覧をDBから読み込む ──
+async function loadMyRequests(){
+  if(!sb||!_myEmpId) return;
+  var listEl = document.getElementById('myShiftRequestList');
+  if(!listEl) return;
+  var [r1, r2, r3] = await Promise.all([
+    sb.from('shift_requests').select('*').eq('employee_id',_myEmpId).order('created_at',{ascending:false}).limit(15),
+    sb.from('shift_swap_requests').select('*').or('requester_id.eq.'+_myEmpId+',target_id.eq.'+_myEmpId).order('created_at',{ascending:false}).limit(15),
+    sb.from('shift_wish_requests').select('*').eq('employee_id',_myEmpId).order('created_at',{ascending:false}).limit(10)
+  ]);
+  var empIds = new Set();
+  (r2.data||[]).forEach(function(r){ empIds.add(r.requester_id); empIds.add(r.target_id); });
+  var empMap = {};
+  if(empIds.size > 0){
+    var {data:emps} = await sb.from('employees').select('id,name').in('id', Array.from(empIds));
+    (emps||[]).forEach(function(e){ empMap[e.id] = e.name; });
+  }
+  var html = '';
+  (r3.data||[]).forEach(function(r){
+    var badge = r.status==='approved'?'<span class="badge-app b-appr">承認済</span>'
+               :r.status==='rejected'?'<span class="badge-app b-rej">否認</span>'
+               :'<span class="badge-app b-pend">審査中</span>';
+    var dates = [];
+    try{ dates = Array.isArray(r.wish_dates)?r.wish_dates:JSON.parse(r.wish_dates||'[]'); }catch(e){}
+    html += '<div class="list-row">'
+      +'<div class="list-icon" style="background:var(--war-l)"><i class="bi bi-calendar-heart" style="color:var(--war)"></i></div>'
+      +'<div style="flex:1"><div class="list-title">🌟 シフト・休暇希望</div><div class="list-sub">'+r.wish_month+'（'+dates.length+'日）</div></div>'
+      +badge+'</div>';
+  });
+  (r1.data||[]).forEach(function(r){
+    var badge = r.status==='approved'?'<span class="badge-app b-appr">承認済</span>'
+               :r.status==='rejected'?'<span class="badge-app b-rej">否認</span>'
+               :'<span class="badge-app b-pend">審査中</span>';
+    html += '<div class="list-row">'
+      +'<div class="list-icon" style="background:var(--suc-l)"><i class="bi bi-calendar-week" style="color:var(--suc)"></i></div>'
+      +'<div style="flex:1"><div class="list-title">📅 シフト変更申請</div><div class="list-sub">'+r.request_date+'</div></div>'
+      +badge+'</div>';
+  });
+  (r2.data||[]).forEach(function(r){
+    var isReq = r.requester_id === _myEmpId;
+    var badge = r.status==='approved'?'<span class="badge-app b-appr">承認済</span>'
+               :r.status==='rejected'?'<span class="badge-app b-rej">否認</span>'
+               :'<span class="badge-app b-pend">審査中</span>';
+    var other = empMap[isReq?r.target_id:r.requester_id]||'—';
+    var label = isReq?('🔄 交換申請 → '+other):('🔄 交換依頼 ← '+other);
+    html += '<div class="list-row">'
+      +'<div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-arrow-left-right" style="color:var(--pur)"></i></div>'
+      +'<div style="flex:1"><div class="list-title">'+label+'</div><div class="list-sub">'+r.requester_date+' ⇔ '+r.target_date+'</div></div>'
+      +badge+'</div>';
+  });
+  if(!html) html = '<div class="list-row"><div class="list-sub" style="color:var(--muted)">申請履歴がありません</div></div>';
+  listEl.innerHTML = html;
+}
+
+// ── シフト・休暇希望カレンダー ──
+var _wishYear = 0, _wishMonth = 0;
+var _wishSelected = [];
+
+function initWishCalendar(){
+  var now = new Date();
+  _wishYear  = now.getFullYear();
+  _wishMonth = now.getMonth();
+  _wishSelected = [];
+  var r = document.getElementById('wishReason');
+  if(r) r.value = '';
+  var e = document.getElementById('wishReqErr');
+  if(e) e.textContent = '';
+  renderWishCalendar();
+}
+
+function renderWishCalendar(){
+  var lbl = document.getElementById('wishMonthLabel');
+  if(lbl) lbl.textContent = _wishYear+'年'+(_wishMonth+1)+'月';
+  var grid = document.getElementById('wishCalGrid');
+  if(!grid) return;
+    var firstDay = new Date(_wishYear, _wishMonth, 1);
+  var daysInMonth = new Date(_wishYear, _wishMonth+1, 0).getDate();
+  var startDow = firstDay.getDay(); // 0=Sun
+  var weeks = ['日','月','火','水','木','金','土'];
+  var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;margin-bottom:6px">';
+  weeks.forEach(function(d,i){
+    html += '<div style="font-size:11px;font-weight:700;color:'+(i===0?'var(--err)':i===6?'#2563eb':'var(--muted)')+'">'+d+'</div>';
+  });
+  html += '</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+  for(var i=0;i<startDow;i++) html += '<div></div>';
+  for(var d=1;d<=daysInMonth;d++){
+    var ds = _wishYear+'-'+String(_wishMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dow = new Date(_wishYear,_wishMonth,d).getDay();
+    var sel = _wishSelected.indexOf(ds)>=0;
+    var clr = dow===0?'var(--err)':dow===6?'#2563eb':'var(--txt)';
+    html += '<div onclick="toggleWishDate(\''+ds+'\')" style="padding:6px 2px;border-radius:8px;text-align:center;cursor:pointer;font-size:13px;'
+      +(sel?'background:var(--pri);color:#fff;font-weight:700;':'border:1px solid var(--border);color:'+clr+';')
+      +'">'+d+'</div>';
+  }
+  html += '</div>';
+  grid.innerHTML = html;
+  var cnt = document.getElementById('wishSelCount');
+  if(cnt) cnt.textContent = _wishSelected.length+'日選択中';
+}
+
+function toggleWishDate(ds){
+  var idx = _wishSelected.indexOf(ds);
+  if(idx>=0) _wishSelected.splice(idx,1); else _wishSelected.push(ds);
+  renderWishCalendar();
+}
+function wishPrevMonth(){ if(_wishMonth===0){_wishYear--;_wishMonth=11;}else{_wishMonth--;} renderWishCalendar(); }
+function wishNextMonth(){ if(_wishMonth===11){_wishYear++;_wishMonth=0;}else{_wishMonth++;} renderWishCalendar(); }
+
+async function openShiftDetail(dateStr){
+  goScreen('screen-shift-detail');
+  var d=new Date(dateStr+'T00:00:00');
+  var DOW=['日','月','火','水','木','金','土'];
+  var dateLabel=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+DOW[d.getDay()]+'）';
+  var dateEl=document.getElementById('shiftDetailDate');
+  var titleEl=document.getElementById('shiftDetailTitle');
+  var rowsEl=document.getElementById('shiftDetailRows');
+  var colList=document.getElementById('shiftColleagueList');
+  if(dateEl) dateEl.textContent=dateLabel;
+  if(titleEl) titleEl.textContent='読み込み中...';
+  if(rowsEl) rowsEl.innerHTML='';
+  if(colList) colList.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">読み込み中...</div>';
+  if(!sb||!_myEmpId){if(titleEl) titleEl.textContent='ログインが必要です';return;}
+  // 自分のシフト取得
+  var {data:myShift,error:e1}=await sb.from('shift_schedules')
+    .select('*, shift_patterns(id,name,start_time,end_time,break_minutes,color)')
+    .eq('employee_id',_myEmpId).eq('date',dateStr).maybeSingle();
+  if(e1||!myShift){
+    if(titleEl) titleEl.textContent='この日はシフト未登録';
+    if(rowsEl) rowsEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0">シフト情報がありません</div>';
+    if(colList) colList.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">—</div>';
+    return;
+  }
+  var pat=myShift.shift_patterns||{};
+  var st=myShift.custom_start||pat.start_time||'';
+  var en=myShift.custom_end||pat.end_time||'';
+  var brk=pat.break_minutes||60;
+  var wkH=st&&en?((new Date('2000-01-01T'+en)-new Date('2000-01-01T'+st))/3600000-brk/60).toFixed(1):null;
+  if(titleEl) titleEl.textContent=pat.name||'シフト';
+  if(rowsEl) rowsEl.innerHTML=
+    (st?'<div class="info-row"><span class="info-key">勤務開始</span><span class="info-val">'+st.substring(0,5)+'</span></div>':'')+
+    (en?'<div class="info-row"><span class="info-key">勤務終了</span><span class="info-val">'+en.substring(0,5)+'</span></div>':'')+
+    '<div class="info-row"><span class="info-key">休憩</span><span class="info-val">'+brk+'分</span></div>'+
+    (wkH?'<div class="info-row"><span class="info-key">勤務時間</span><span class="info-val" style="color:var(--pri)"><b>'+wkH+'時間</b></span></div>':'')+
+    (myShift.note?'<div class="info-row"><span class="info-key">メモ</span><span class="info-val">'+myShift.note+'</span></div>':'');
+  // 同じパターンの職員を取得
+  if(!myShift.pattern_id){
+    if(colList) colList.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">パターン未設定</div>';
+    return;
+  }
+  var r1=await sb.from('shift_schedules').select('employee_id')
+    .eq('date',dateStr).eq('pattern_id',myShift.pattern_id).neq('employee_id',_myEmpId);
+  var r2=await sb.from('employees').select('id,name,department').eq('is_active',true);
+  var empMap={};(r2.data||[]).forEach(function(e){empMap[e.id]=e;});
+  var peers=(r1.data||[]).map(function(s){return empMap[s.employee_id];}).filter(Boolean);
+  if(!colList) return;
+  if(!peers.length){
+    colList.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">同じシフトの職員はいません</div>';
+    return;
+  }
+  colList.innerHTML=peers.map(function(e){
+    var initials=e.name?e.name.charAt(0):'?';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:var(--pri-l);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--pri);flex-shrink:0">'+initials+'</div>'
+      +'<div><div style="font-size:14px;font-weight:600">'+e.name+'</div>'+(e.department?'<div style="font-size:11px;color:var(--muted)">'+e.department+'</div>':'')+'</div>'
+      +'</div>';
+  }).join('')+'<div style="font-size:11px;color:var(--muted);text-align:right;padding-top:6px">計 '+peers.length+'人</div>';
+}
+
+async function loadSwapEmpList(){
+  var sel = document.getElementById('swapTargetEmp');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">読み込み中...</option>';
+  if(!sb){sel.innerHTML='<option value="">ログインしてください</option>';return;}
+  var {data,error} = await sb.from('employees')
+    .select('id,name,department,role')
+    .eq('is_active',true)
+    .neq('role','管理者')
+    .order('department').order('name');
+  if(error||!data){sel.innerHTML='<option value="">取得エラー</option>';return;}
+  // 自分自身を除外
+  var others = data.filter(function(e){return e.id!==_myEmpId;});
+  if(!others.length){sel.innerHTML='<option value="">対象職員なし</option>';return;}
+  sel.innerHTML='<option value="">選択してください</option>'+
+    others.map(function(e){
+      var dept=e.department?'['+e.department+'] ':'';
+      return '<option value="'+e.id+'">'+dept+e.name+'</option>';
+    }).join('');
+}
+
+async function submitShiftSwap(){
+  var errEl = document.getElementById('swapReqErr');
+  if(errEl) errEl.textContent='';
+  var myDate    = (document.getElementById('swapMyDate')||{}).value||'';
+  var targetId  = (document.getElementById('swapTargetEmp')||{}).value||'';
+  var targetDate= (document.getElementById('swapTargetDate')||{}).value||'';
+  var reason    = (document.getElementById('swapReason')||{}).value||'';
+  if(!myDate)    { if(errEl) errEl.textContent='自分のシフト日を入力してください'; return; }
+  if(!targetId)  { if(errEl) errEl.textContent='交換相手を選択してください'; return; }
+  if(!targetDate){ if(errEl) errEl.textContent='相手のシフト日を入力してください'; return; }
+  if(!sb||!_myEmpId){ if(errEl) errEl.textContent='ログインが必要です'; return; }
+  var btn = document.querySelector('#screen-apply-shift-swap .btn-app.btn-pri');
+  if(btn){ btn.disabled=true; btn.textContent='送信中…'; }
+  var {error} = await sb.from('shift_swap_requests').insert({
+    requester_id:   _myEmpId,
+    target_id:      targetId,
+    requester_date: myDate,
+    target_date:    targetDate,
+    reason:         reason,
+    status:         'pending'
+  });
+  if(btn){ btn.disabled=false; btn.textContent='交換申請する'; }
+  if(error){
+    if(errEl) errEl.textContent='送信エラー: '+(error.message||error.code||'不明なエラー');
+    return;
+  }
+  // 完了画面表示
+  var targetName = '';
+  var sel = document.getElementById('swapTargetEmp');
+  if(sel) { var opt=sel.options[sel.selectedIndex]; targetName=opt?opt.text:''; }
+  var fmt = function(d){ return d?d.replace(/-/g,'/'):''; };
+  var msgEl = document.getElementById('swapDoneMsg');
+  if(msgEl) msgEl.textContent = targetName+'へのシフト交換申請を送信しました。';
+  var detEl = document.getElementById('swapDoneDetail');
+  if(detEl) detEl.innerHTML =
+    '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px">'
+    +'<span style="color:var(--muted)">自分のシフト日</span><span style="font-weight:700">'+fmt(myDate)+'</span>'
+    +'<span style="color:var(--muted)">交換相手</span><span style="font-weight:700">'+targetName+'</span>'
+    +'<span style="color:var(--muted)">もらいたい日</span><span style="font-weight:700">'+fmt(targetDate)+'</span>'
+    +(reason?'<span style="color:var(--muted)">理由</span><span>'+reason+'</span>':'')
+    +'</div>';
+  // フォームリセット
+  ['swapMyDate','swapTargetDate','swapReason'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  if(sel){ sel.selectedIndex=0; }
+  goScreen('screen-swap-done');
+}
+
+async function submitShiftWish(){
+  var errEl = document.getElementById('wishReqErr');
+  if(errEl) errEl.textContent='';
+  if(_wishSelected.length===0){ if(errEl) errEl.textContent='希望日を選択してください'; return; }
+  if(!sb||!_myEmpId){ if(errEl) errEl.textContent='ログインが必要です'; return; }
+  var reason = (document.getElementById('wishReason')||{}).value||'';
+  var wishMonth = _wishYear+'年'+(_wishMonth+1)+'月';
+  var {error} = await sb.from('shift_wish_requests').insert({
+    employee_id: _myEmpId,
+    wish_month: wishMonth,
+    wish_dates: _wishSelected.slice().sort(),
+    reason: reason,
+    status: 'pending'
+  });
+  if(error){ if(errEl) errEl.textContent='送信失敗: '+error.message; return; }
+  showToast('希望シフトを送信しました');
+  goScreen('screen-apply');
+}
+
+// ── お知らせ ──
+async function loadHomeNotices(){
+  var el = document.getElementById('homeNoticeList');
+  if(!el) return;
+  if(!sb){ el.innerHTML='<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">接続中...</div>'; return; }
+  el.innerHTML='<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">読み込み中...</div>';
+  var {data,error} = await sb.from('notices').select('id,title,category,is_pinned,created_at').order('is_pinned',{ascending:false}).order('created_at',{ascending:false}).limit(3);
+  if(error||!data||data.length===0){
+    el.innerHTML='<div class="list-row"><div class="list-sub" style="color:var(--muted);font-size:12px">お知らせはありません</div></div>';
+    return;
+  }
+  var catStyle = {general:'background:#e0f2fe;color:#0369a1',important:'background:#fee2e2;color:#b91c1c',info:'background:#f0fdf4;color:#15803d',handover:'background:#fef9c3;color:#854d0e'};
+  var catLabel = {general:'連絡',important:'重要',info:'情報',handover:'引継'};
+  el.innerHTML = data.map(function(n){
+    var cs = catStyle[n.category]||catStyle.general;
+    var cl = catLabel[n.category]||n.category;
+    return '<div class="list-row" onclick="openNoticeDetail(\''+n.id+'\')" style="cursor:pointer">'
+      +(n.is_pinned?'<div style="font-size:16px;margin-right:6px">📌</div>':'')
+      +'<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
+      +'<span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;'+cs+'">'+cl+'</span>'
+      +'<div class="list-title" style="margin:0;font-size:13px">'+n.title+'</div></div>'
+      +'<div class="list-sub" style="font-size:11px">'+(n.created_at||'').slice(0,10)+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+async function loadAllNotices(){
+  var el = document.getElementById('noticeFullList');
+  if(!el||!sb) return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">読み込み中...</div>';
+  var {data,error} = await sb.from('notices').select('id,title,category,is_pinned,author_name,created_at').order('is_pinned',{ascending:false}).order('created_at',{ascending:false}).limit(50);
+  if(error||!data||data.length===0){
+    el.innerHTML='<div class="list-row"><div class="list-sub" style="color:var(--muted)">お知らせはありません</div></div>';
+    return;
+  }
+  var catStyle = {general:'background:#e0f2fe;color:#0369a1',important:'background:#fee2e2;color:#b91c1c',info:'background:#f0fdf4;color:#15803d',handover:'background:#fef9c3;color:#854d0e'};
+  var catLabel = {general:'連絡',important:'重要',info:'情報',handover:'引継'};
+  el.innerHTML = data.map(function(n){
+    var cs = catStyle[n.category]||catStyle.general;
+    var cl = catLabel[n.category]||n.category;
+    return '<div class="list-row" onclick="openNoticeDetail(\''+n.id+'\')" style="cursor:pointer">'
+      +(n.is_pinned?'<div style="font-size:16px;margin-right:6px">📌</div>':'')
+      +'<div style="flex:1"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
+      +'<span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;'+cs+'">'+cl+'</span>'
+      +'<div class="list-title" style="margin:0;font-size:13px">'+n.title+'</div></div>'
+      +'<div class="list-sub" style="font-size:11px">'+n.author_name+' ・ '+(n.created_at||'').slice(0,10)+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+var _noticeDetailId = null;
+async function openNoticeDetail(id){
+  _noticeDetailId = id;
+  var el = document.getElementById('noticeDetailCard');
+  if(el) el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">読み込み中...</div>';
+  goScreen('screen-notice-detail');
+  if(!sb) return;
+  var {data,error} = await sb.from('notices').select('*').eq('id',id).maybeSingle();
+  if(error||!data){ if(el) el.innerHTML='<div style="color:var(--err)">読み込み失敗</div>'; return; }
+  var catStyle = {general:'background:#e0f2fe;color:#0369a1',important:'background:#fee2e2;color:#b91c1c',info:'background:#f0fdf4;color:#15803d',handover:'background:#fef9c3;color:#854d0e'};
+  var catLabel = {general:'連絡',important:'重要',info:'情報',handover:'引継'};
+  var cs = catStyle[data.category]||catStyle.general;
+  var cl = catLabel[data.category]||data.category;
+  var imgHtml = data.image_url?'<img src="'+data.image_url+'" style="width:100%;border-radius:12px;margin-top:12px" alt="添付画像">':'';
+  var delBtn = '';
+  if(data.author_id === _myAuthId){
+    delBtn = '<button class="btn-app btn-out" style="margin-top:12px;color:var(--err);border-color:var(--err)" onclick="deleteStaffNotice(\''+id+'\')">🗑 削除</button>';
+  }
+  if(el) el.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+    +(data.is_pinned?'<span style="font-size:20px">📌</span>':'')
+    +'<span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;'+cs+'">'+cl+'</span>'
+    +'</div>'
+    +'<div style="font-size:18px;font-weight:700;margin-bottom:8px">'+data.title+'</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+data.author_name+' ・ '+(data.created_at||'').slice(0,10)+'</div>'
+    +'<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">'+data.body+'</div>'
+    +imgHtml+delBtn;
+}
+
+async function deleteStaffNotice(id){
+  if(!confirm('削除しますか？')) return;
+  var {error} = await sb.from('notices').delete().eq('id',id);
+  if(error){ showToast('削除失敗'); return; }
+  showToast('削除しました');
+  goScreen('screen-notice');
+}
+
+var _staffNoticeImgB64 = null;
+function staffPreviewImg(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var canvas = document.createElement('canvas');
+      var max = 800;
+      var w = img.width, h = img.height;
+      if(w>max){ h=Math.round(h*max/w); w=max; }
+      if(h>max){ w=Math.round(w*max/h); h=max; }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      _staffNoticeImgB64 = canvas.toDataURL('image/jpeg',0.82);
+      var prev = document.getElementById('staffNoticeImgPreview');
+      if(prev){ prev.src=_staffNoticeImgB64; prev.style.display='block'; }
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitStaffNotice(){
+  var errEl = document.getElementById('staffNoticeErr');
+  if(errEl) errEl.textContent='';
+  if(!sb||!_myAuthId){ if(errEl) errEl.textContent='ログインが必要です'; return; }
+  var cat = (document.getElementById('staffNoticeCat')||{}).value||'general';
+  var title = ((document.getElementById('staffNoticeTitle')||{}).value||'').trim();
+  var body = ((document.getElementById('staffNoticeBody')||{}).value||'').trim();
+  if(!title){ if(errEl) errEl.textContent='タイトルを入力してください'; return; }
+  if(!body){ if(errEl) errEl.textContent='本文を入力してください'; return; }
+  var nameEl = document.getElementById('heroName');
+  var authorName = (nameEl&&nameEl.textContent)||'スタッフ';
+  var {error} = await sb.from('notices').insert({
+    author_id: _myAuthId,
+    author_name: authorName,
+    category: cat,
+    title: title,
+    body: body,
+    image_url: _staffNoticeImgB64||null,
+    is_pinned: false
+  });
+  if(error){ if(errEl) errEl.textContent='投稿失敗: '+error.message; return; }
+  _staffNoticeImgB64 = null;
+  var inp = document.getElementById('staffNoticeImgInput');
+  if(inp) inp.value='';
+  var prev = document.getElementById('staffNoticeImgPreview');
+  if(prev) prev.style.display='none';
+  showToast('投稿しました');
+  goScreen('screen-notice');
+}
+
+// ── 多言語対応 ──
+var _i18n = {
+  ja:{
+    'login.email':'メールアドレス','login.password':'パスワード','login.btn':'ログイン',
+    'home.punch_status':'打刻状況','home.notice':'📢 お知らせ','home.apply':'申請状況',
+    'home.today_shift':'今日のシフト','home.normal_work':'通常勤務',
+    'home.punch_btn':'打刻する','home.history_btn':'履歴',
+    'nav.home':'ホーム','nav.punch':'打刻','nav.shift':'シフト','nav.apply':'申請','nav.mypage':'マイページ',
+    'menu.attendance':'勤怠管理','menu.shift':'シフト確認','menu.apply':'申請一覧',
+    'menu.notice':'お知らせ','menu.mypage':'マイページ','menu.settings':'Setting',
+    'settings.lang':'言語設定','settings.notif':'通知設定','settings.logout':'ログアウト',
+    'punch.clock_in':'出勤','punch.clock_out':'退勤','punch.break_start':'休憩\n開始',
+    'punch.break_end':'休憩\n終了','punch.go_out':'外出','punch.return':'戻り',
+    'punch.photo':'写真撮影','punch.photo_sub':'打刻時に自撮り撮影',
+    'punch.complete':'打刻完了','punch.waiting_out':'退勤待ち',
+    'common.back_home':'ホームに戻る',
+    'status.working':'勤務中','status.pending':'審査中','status.approved':'承認済','status.rejected':'否認',
+    'shift.normal':'通常(N)','shift.early':'早番(E)','shift.wish_off':'希望休','shift.wish_work':'希望出勤',
+    'shift.enter_wish':'希望シフトを入力する','shift.apply_change':'シフト変更を申請する',
+    'shift.start':'勤務開始','shift.end':'勤務終了','shift.break':'休憩','shift.hours':'勤務時間','shift.location':'勤務場所',
+    'apply.history_title':'シフト申請・交換履歴','apply.new':'新規申請',
+    'apply_cat.leave':'休暇申請','apply_cat.other':'その他申請',
+    'apply_type.paid_leave':'有給休暇','apply_type.half_leave':'半日休暇','apply_type.hourly_leave':'時間単位休暇',
+    'apply_type.absence':'欠勤申請','apply_type.late_early':'遅刻・早退申請','apply_type.overtime':'残業申請',
+    'apply_type.holiday_work':'休日出勤申請','apply_type.punch_fix':'打刻修正申請',
+    'apply_type.shift_wish':'シフト・休暇希望申請','apply_type.shift_change':'シフト変更申請','apply_type.shift_swap':'シフト交換申請',
+    'form.start_date':'開始日','form.end_date':'終了日','form.reason':'理由','form.comment':'コメント',
+    'form.submit':'申請する','form.register':'登録する','form.am':'午前','form.pm':'午後',
+    'form.start_time':'開始時刻','form.end_time':'終了時刻','form.hours':'時間数','form.date':'日付','form.type':'種別','form.body':'本文',
+    'leave.remaining':'有給残日数','leave.used':'今年度取得','leave.granted':'付与日数',
+    'leave.history':'取得履歴','leave.grant_hist':'付与履歴','leave.expire':'消滅予定',
+    'notice.post_btn':'✏️ 投稿','notice.see_all':'すべて見る','notice.category':'カテゴリ',
+    'notice.attach_photo':'📷 写真添付（任意）','notice.submit_btn':'📢 投稿する',
+    'profile.name':'氏名','profile.dept':'部署','profile.emp_no':'社員番号',
+    'profile.emp_type':'雇用形態','profile.hire_date':'入社日','profile.edit':'プロフィール編集',
+    'notif.notice':'お知らせ通知','notif.shift':'シフト通知','notif.apply_result':'申請結果通知','notif.punch_reminder':'打刻リマインダー'
+  },
+  en:{
+    'login.email':'Email','login.password':'Password','login.btn':'Login',
+    'home.punch_status':'Attendance','home.notice':'📢 Notices','home.apply':'Requests',
+    'home.today_shift':"Today's Shift",'home.normal_work':'Regular','home.punch_btn':'Clock In/Out','home.history_btn':'History',
+    'nav.home':'Home','nav.punch':'Clock','nav.shift':'Shift','nav.apply':'Apply','nav.mypage':'Profile',
+    'menu.attendance':'Attendance','menu.shift':'My Shift','menu.apply':'My Requests',
+    'menu.notice':'Notices','menu.mypage':'My Page','menu.settings':'Settings',
+    'settings.lang':'Language','settings.notif':'Notifications','settings.logout':'Logout',
+    'punch.clock_in':'Clock In','punch.clock_out':'Clock Out','punch.break_start':'Break\nStart',
+    'punch.break_end':'Break\nEnd','punch.go_out':'Out','punch.return':'Back',
+    'punch.photo':'Photo','punch.photo_sub':'Selfie at clock-in','punch.complete':'Clocked!','punch.waiting_out':'Waiting',
+    'common.back_home':'Back to Home',
+    'status.working':'Working','status.pending':'Pending','status.approved':'Approved','status.rejected':'Rejected',
+    'shift.normal':'Regular','shift.early':'Early','shift.wish_off':'Day Off','shift.wish_work':'Work',
+    'shift.enter_wish':'Enter Shift Preference','shift.apply_change':'Request Shift Change',
+    'shift.start':'Start','shift.end':'End','shift.break':'Break','shift.hours':'Hours','shift.location':'Location',
+    'apply.history_title':'Request History','apply.new':'New Request',
+    'apply_cat.leave':'Leave','apply_cat.other':'Other',
+    'apply_type.paid_leave':'Paid Leave','apply_type.half_leave':'Half Day','apply_type.hourly_leave':'Hourly Leave',
+    'apply_type.absence':'Absence','apply_type.late_early':'Late/Early','apply_type.overtime':'Overtime',
+    'apply_type.holiday_work':'Holiday Work','apply_type.punch_fix':'Time Fix',
+    'apply_type.shift_wish':'Shift Preference','apply_type.shift_change':'Shift Change','apply_type.shift_swap':'Shift Swap',
+    'form.start_date':'Start Date','form.end_date':'End Date','form.reason':'Reason','form.comment':'Comment',
+    'form.submit':'Submit','form.register':'Register','form.am':'AM','form.pm':'PM',
+    'form.start_time':'Start Time','form.end_time':'End Time','form.hours':'Hours','form.date':'Date','form.type':'Type','form.body':'Body',
+    'leave.remaining':'Remaining','leave.used':'Used This Year','leave.granted':'Granted',
+    'leave.history':'History','leave.grant_hist':'Grant History','leave.expire':'Expiring',
+    'notice.post_btn':'✏️ Post','notice.see_all':'See All','notice.category':'Category',
+    'notice.attach_photo':'📷 Attach Photo (optional)','notice.submit_btn':'📢 Post',
+    'profile.name':'Name','profile.dept':'Dept','profile.emp_no':'Employee No',
+    'profile.emp_type':'Type','profile.hire_date':'Hire Date','profile.edit':'Edit Profile',
+    'notif.notice':'Notices','notif.shift':'Shift','notif.apply_result':'Request Result','notif.punch_reminder':'Punch Reminder'
+  },
+  vi:{
+    'login.email':'Email','login.password':'Mật khẩu','login.btn':'Đăng nhập',
+    'home.punch_status':'Chấm công','home.notice':'📢 Thông báo','home.apply':'Đơn xin',
+    'home.today_shift':'Ca hôm nay','home.normal_work':'Bình thường','home.punch_btn':'Chấm công','home.history_btn':'Lịch sử',
+    'nav.home':'Trang chủ','nav.punch':'Chấm','nav.shift':'Ca làm','nav.apply':'Đơn','nav.mypage':'Cá nhân',
+    'menu.attendance':'Chấm công','menu.shift':'Ca làm việc','menu.apply':'Danh sách đơn',
+    'menu.notice':'Thông báo','menu.mypage':'Trang cá nhân','menu.settings':'Cài đặt',
+    'settings.lang':'Ngôn ngữ','settings.notif':'Thông báo','settings.logout':'Đăng xuất',
+    'punch.clock_in':'Vào ca','punch.clock_out':'Ra ca','punch.break_start':'Nghỉ\ngiải lao','punch.break_end':'Tiếp\ntục',
+    'punch.go_out':'Ra ngoài','punch.return':'Quay lại','punch.photo':'Chụp ảnh','punch.photo_sub':'Selfie khi chấm',
+    'punch.complete':'Đã chấm!','punch.waiting_out':'Chờ ra ca',
+    'common.back_home':'Về trang chủ',
+    'status.working':'Đang làm','status.pending':'Chờ duyệt','status.approved':'Đã duyệt','status.rejected':'Từ chối',
+    'shift.normal':'Bình thường','shift.early':'Ca sáng','shift.wish_off':'Nghỉ','shift.wish_work':'Làm việc',
+    'shift.enter_wish':'Nhập nguyện vọng ca','shift.apply_change':'Xin đổi ca',
+    'shift.start':'Bắt đầu','shift.end':'Kết thúc','shift.break':'Nghỉ','shift.hours':'Giờ làm','shift.location':'Địa điểm',
+    'apply.history_title':'Lịch sử đơn','apply.new':'Đơn mới',
+    'apply_cat.leave':'Nghỉ phép','apply_cat.other':'Khác',
+    'apply_type.paid_leave':'Nghỉ có lương','apply_type.half_leave':'Nửa ngày','apply_type.hourly_leave':'Theo giờ',
+    'apply_type.absence':'Vắng mặt','apply_type.late_early':'Muộn/Sớm','apply_type.overtime':'Tăng ca',
+    'apply_type.holiday_work':'Làm lễ','apply_type.punch_fix':'Sửa chấm',
+    'apply_type.shift_wish':'Nguyện vọng ca','apply_type.shift_change':'Đổi ca','apply_type.shift_swap':'Hoán ca',
+    'form.start_date':'Ngày bắt đầu','form.end_date':'Ngày kết thúc','form.reason':'Lý do','form.comment':'Ghi chú',
+    'form.submit':'Gửi đơn','form.register':'Đăng ký','form.am':'Sáng','form.pm':'Chiều',
+    'form.start_time':'Giờ bắt đầu','form.end_time':'Giờ kết thúc','form.hours':'Số giờ','form.date':'Ngày','form.type':'Loại','form.body':'Nội dung',
+    'leave.remaining':'Còn lại','leave.used':'Đã dùng','leave.granted':'Được cấp',
+    'leave.history':'Lịch sử','leave.grant_hist':'Cấp phép','leave.expire':'Hết hạn',
+    'notice.post_btn':'✏️ Đăng','notice.see_all':'Xem tất cả','notice.category':'Danh mục',
+    'notice.attach_photo':'📷 Đính ảnh (tùy chọn)','notice.submit_btn':'📢 Đăng',
+    'profile.name':'Họ tên','profile.dept':'Phòng ban','profile.emp_no':'Mã NV',
+    'profile.emp_type':'Loại HĐ','profile.hire_date':'Ngày vào','profile.edit':'Chỉnh hồ sơ',
+    'notif.notice':'Thông báo','notif.shift':'Ca làm','notif.apply_result':'Kết quả đơn','notif.punch_reminder':'Nhắc chấm'
+  },
+  zh:{
+    'login.email':'邮箱','login.pw':'密码','login.btn':'登录','login.forgot':'忘记密码',
+    'home.punch_status':'打卡状态','home.notice':'📢 通知','home.apply':'申请状态',
+    'home.today_shift':'今日班次','home.normal_work':'正常上班','home.punch_btn':'打卡','home.history_btn':'历史',
+    'nav.home':'首页','nav.punch':'打卡','nav.shift':'班次','nav.apply':'申请','nav.mypage':'我的',
+    'menu.attendance':'打卡','menu.shift':'班次管理','menu.apply':'申请列表',
+    'menu.notice':'通知','menu.mypage':'个人页面','menu.settings':'设置',
+    'settings.lang':'语言设置','settings.notif':'通知设置','settings.logout':'退出登录',
+    'punch.clock_in':'上班','punch.clock_out':'下班','punch.break_start':'休息\n开始','punch.break_end':'继续\n上班',
+    'punch.go_out':'外出','punch.return':'返回','punch.photo':'拍照','punch.photo_sub':'自拍打卡',
+    'punch.complete':'打卡完成！','punch.waiting_out':'等待下班',
+    'common.back_home':'返回首页',
+    'status.working':'上班中','status.pending':'审批中','status.approved':'已批准','status.rejected':'已拒绝',
+    'shift.normal':'正常班','shift.early':'早班','shift.wish_off':'希望休','shift.wish_work':'希望上班',
+    'shift.enter_wish':'输入班次意愿','shift.apply_change':'申请换班',
+    'shift.start':'开始时间','shift.end':'结束时间','shift.break':'休息','shift.hours':'工作时间','shift.location':'工作地点',
+    'apply.history_title':'申请历史','apply.new':'新申请',
+    'apply_cat.leave':'休假','apply_cat.other':'其他',
+    'apply_type.paid_leave':'带薪休假','apply_type.half_leave':'半天','apply_type.hourly_leave':'按小时',
+    'apply_type.absence':'缺勤','apply_type.late_early':'迟到/早退','apply_type.overtime':'加班',
+    'apply_type.holiday_work':'节假日上班','apply_type.punch_fix':'修正打卡',
+    'apply_type.shift_wish':'班次意愿','apply_type.shift_change':'换班申请','apply_type.shift_swap':'班次互换',
+    'form.start_date':'开始日期','form.end_date':'结束日期','form.reason':'理由','form.comment':'备注',
+    'form.submit':'提交','form.register':'登记','form.am':'上午','form.pm':'下午',    'form.start_time':'开始时间','form.end_time':'结束时间','form.hours':'工时','form.date':'日期','form.type':'类型','form.body':'内容',
+    'leave.remaining':'年假剩余','leave.used':'今年已用','leave.granted':'授予天数',
+    'leave.history':'使用记录','leave.grant_hist':'授予记录','leave.expire':'即将到期',
+    'notice.post_btn':'✏️ 发布','notice.see_all':'查看全部','notice.category':'类别',
+    'notice.attach_photo':'📷 附加照片（选填）','notice.submit_btn':'📢 发布',
+    'profile.name':'姓名','profile.dept':'部门','profile.emp_no':'员工编号',
+    'profile.emp_type':'雇用形式','profile.hire_date':'入职日期','profile.edit':'编辑资料',
+    'notif.notice':'通知提醒','notif.shift':'班次通知','notif.apply_result':'申请结果','notif.punch_reminder':'打卡提醒'
+  }
+};
+
+var _lang = (function(){
+  try{ return localStorage.getItem('staff_lang')||'ja'; }catch(e){ return 'ja'; }
+})();
+
+function t(key){ return (_i18n[_lang]&&_i18n[_lang][key])||_i18n.ja[key]||key; }
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    var val = t(key);
+    if(val) el.textContent = val;
+  });
+}
+
+function checkSideJobFeature(){
+  var enabled = localStorage.getItem('sidejob_enabled')==='1';
+  var wrap = document.getElementById('sideJobPunchWrap');
+  if(wrap) wrap.style.display = enabled?'':'none';
+  var wrapHome = document.getElementById('sideJobPunchWrapHome');
+  if(wrapHome) wrapHome.style.display = enabled?'':'none';
+  var row = document.getElementById('sidejob-apply-row');
+  if(row) row.style.display = enabled?'':'none';
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  restoreLoginCredentials();
+  applyI18n();
+  updateClock();
+  checkSideJobFeature();
+});
+</script>
+</body>
+</html>
