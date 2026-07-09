@@ -14,7 +14,6 @@
   --bg:#f1f5f9;--card:#fff;--border:#e2e8f0;
   --text:#1e293b;--muted:#64748b;--sidebar:#0f172a;
 }
-  
 body{font-family:'Segoe UI',Meiryo,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
 
 /* ── Sidebar ── */
@@ -488,17 +487,18 @@ tr:hover td{background:#fafafa}
     <div class="tab" onclick="switchTab(this,'tab-punch-app')">打刻申請</div>
     <div class="tab" onclick="switchTab(this,'tab-shift-app');loadShiftApprovals()">📋 シフト申請</div>
     <div class="tab" id="tab-sidejob-nav" onclick="switchTab(this,'tab-sidejob-app');loadSideJobApprovals()">💼 副業申請</div>
+    <div class="tab" onclick="switchTab(this,'tab-workflow-cfg');loadWorkflowConfig()">⚙️ ワークフロー設定</div>
   </div>
   <div class="tab-content active" id="tab-leave-app">
     <div class="card">
-      <table><thead><tr><th>申請者</th><th>種類</th><th>期間</th><th>理由</th><th>申請日</th><th>操作</th></tr></thead>
-      <tbody id="leaveAppTbl"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody></table>
+      <table><thead><tr><th>申請者</th><th>種類</th><th>期間</th><th>理由</th><th>申請日</th><th>進捗</th><th>操作</th></tr></thead>
+      <tbody id="leaveAppTbl"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody></table>
     </div>
   </div>
   <div class="tab-content" id="tab-ot-app">
     <div class="card">
-      <table><thead><tr><th>申請者</th><th>日付</th><th>時間</th><th>理由</th><th>申請日</th><th>操作</th></tr></thead>
-      <tbody id="otAppTbl"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody></table>
+      <table><thead><tr><th>申請者</th><th>日付</th><th>時間</th><th>理由</th><th>申請日</th><th>進捗</th><th>操作</th></tr></thead>
+      <tbody id="otAppTbl"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody></table>
     </div>
   </div>
   <div class="tab-content" id="tab-punch-app">
@@ -523,8 +523,8 @@ tr:hover td{background:#fafafa}
       </div>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>区分</th><th>申請者</th><th>部署</th><th>対象日</th><th>内容</th><th>申請日</th><th>操作</th></tr></thead>
-          <tbody id="shiftApprovalTbl"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">タブを開くと読み込みます</td></tr></tbody>
+          <thead><tr><th>区分</th><th>申請者</th><th>部署</th><th>対象日</th><th>内容</th><th>申請日</th><th>進捗</th><th>操作</th></tr></thead>
+          <tbody id="shiftApprovalTbl"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">タブを開くと読み込みます</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -545,9 +545,22 @@ tr:hover td{background:#fafafa}
         </div>
       </div>
       <table>
-        <thead><tr><th>申請者</th><th>副業先</th><th>業務内容</th><th>開始日</th><th>週時間</th><th>申請日</th><th>ステータス</th><th>操作</th></tr></thead>
-        <tbody id="sideJobAppTbl"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">タブを開くと読み込みます</td></tr></tbody>
+        <thead><tr><th>申請者</th><th>副業先</th><th>業務内容</th><th>開始日</th><th>週時間</th><th>申請日</th><th>ステータス</th><th>進捗</th><th>操作</th></tr></thead>
+        <tbody id="sideJobAppTbl"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">タブを開くと読み込みます</td></tr></tbody>
       </table>
+    </div>
+  </div>
+  <!-- ── ワークフロー設定タブ ── -->
+  <div class="tab-content" id="tab-workflow-cfg">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin:0">⚙️ 承認ワークフロー設定</div>
+        <button class="btn btn-outline btn-sm" onclick="loadWorkflowConfig()">🔄 更新</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+        申請種別ごとに承認の段階（何人・どの役職レベル以上が承認するか）を設定します。ステップが1つも無い、または無効化されている申請種別は従来どおり1回の承認で確定します。
+      </div>
+      <div id="workflowCfgWrap">読み込み中...</div>
     </div>
   </div>
 </div>
@@ -856,6 +869,7 @@ tr:hover td{background:#fafafa}
   <div class="tabs">
     <div class="tab active" onclick="switchTab(this,'tab-users-list');loadAllUsers()">👥 職員一覧</div>
     <div class="tab" onclick="switchTab(this,'tab-users-dept');loadDepts()">🏢 部署設定</div>
+    <div class="tab" onclick="switchTab(this,'tab-users-positions');loadPositions()">🎖️ 役職管理</div>
   </div>
 
   <!-- ── 職員一覧タブ ── -->
@@ -866,8 +880,8 @@ tr:hover td{background:#fafafa}
     </div>
     <div class="card">
       <table>
-        <thead><tr><th>氏名</th><th>メール</th><th>部署</th><th>課</th><th>権限</th><th>入社日</th><th>有休 残/付与</th><th>ステータス</th><th>操作</th></tr></thead>
-        <tbody id="usersTbl"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody>
+        <thead><tr><th>氏名</th><th>メール</th><th>部署</th><th>課</th><th>権限</th><th>役職</th><th>入社日</th><th>有休 残/付与</th><th>ステータス</th><th>操作</th></tr></thead>
+        <tbody id="usersTbl"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -924,6 +938,32 @@ tr:hover td{background:#fafafa}
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- ── 役職管理タブ ── -->
+  <div class="tab-content" id="tab-users-positions">
+    <div class="card" style="max-width:560px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin:0">🎖️ 役職一覧</div>
+        <button class="btn btn-primary btn-sm" onclick="openPositionModal()">＋ 役職を追加</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+        役職はレベル（数字）が大きいほど上位です。承認ワークフローの各ステップは、このレベル以上の役職を持つ職員が承認できます。
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>レベル</th>
+            <th>役職名</th>
+            <th style="text-align:center">人数</th>
+            <th style="width:100px">操作</th>
+          </tr>
+        </thead>
+        <tbody id="positionMasterTbl">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -2059,6 +2099,8 @@ tr:hover td{background:#fafafa}
     <div class="form-row">
       <div class="form-group"><div class="form-label">権限</div>
         <select class="form-control" id="newUserRole"><option value="一般">一般</option><option value="部門長">部門長</option><option value="管理者">管理者</option></select></div>
+      <div class="form-group"><div class="form-label">役職</div>
+        <select class="form-control" id="newUserPositionId"><option value="">未設定</option></select></div>
       <div class="form-group"><div class="form-label">有給付与日数</div><input class="form-control" id="newUserLeave" type="number" value="10"></div>
     </div>
 
@@ -2127,7 +2169,7 @@ tr:hover td{background:#fafafa}
       </div>
       <div class="form-row">
         <div class="form-group"><div class="form-label">ステータス</div><select class="form-control" id="editUserStatus"><option value="true">有効</option><option value="false">無効</option></select></div>
-        <div class="form-group"><div class="form-label">役職</div><input class="form-control" id="editUserPosition" placeholder="例: 課長"></div>
+        <div class="form-group"><div class="form-label">役職</div><select class="form-control" id="editUserPositionId"><option value="">未設定</option></select></div>
       </div>
       <div class="info-section-title">有給設定</div>
       <div class="form-row">
@@ -2303,6 +2345,27 @@ tr:hover td{background:#fafafa}
       <button class="btn btn-red btn-sm" id="dpDelBtn" onclick="deleteDept()" style="margin-right:auto;display:none">削除</button>
       <button class="btn btn-outline" onclick="closeModal('deptModal')">キャンセル</button>
       <button class="btn btn-primary" onclick="saveDept()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Position Modal -->
+<div class="modal-overlay" id="positionModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-title" id="positionModalTitle">🎖️ 役職を追加<span class="modal-close" onclick="closeModal('positionModal')">×</span></div>
+    <input type="hidden" id="posId">
+    <div class="form-group">
+      <div class="form-label">役職名 <span style="color:var(--red)">*</span></div>
+      <input class="form-control" id="posName" placeholder="例: 課長">
+    </div>
+    <div class="form-group">
+      <div class="form-label">レベル（数字が大きいほど上位） <span style="color:var(--red)">*</span></div>
+      <input class="form-control" id="posLevel" type="number" min="1" step="1" placeholder="例: 4">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-red btn-sm" id="posDelBtn" onclick="deletePosition()" style="margin-right:auto;display:none">削除</button>
+      <button class="btn btn-outline" onclick="closeModal('positionModal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePosition()">💾 保存</button>
     </div>
   </div>
 </div>
@@ -2616,21 +2679,11 @@ window.loadShiftAllRequests = function(){
 };
 
 window.approveShiftAllReq = function(id, tbl){
-  if(!confirm('この申請を承認しますか？')) return;
-  sb.from(tbl).update({status:'approved',updated_at:new Date().toISOString()}).eq('id',id).then(function(r){
-    if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
-    showToast('✅ 承認しました','green');
-    loadShiftAllRequests();
-  });
+  actOnApproval((typeof SHIFT_TBL_TO_TYPE!=='undefined'&&SHIFT_TBL_TO_TYPE[tbl])||'shift', id, 'approved', loadShiftAllRequests);
 };
 
 window.rejectShiftAllReq = function(id, tbl){
-  if(!confirm('この申請を否認しますか？')) return;
-  sb.from(tbl).update({status:'rejected',updated_at:new Date().toISOString()}).eq('id',id).then(function(r){
-    if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
-    showToast('否認しました','red');
-    loadShiftAllRequests();
-  });
+  actOnApproval((typeof SHIFT_TBL_TO_TYPE!=='undefined'&&SHIFT_TBL_TO_TYPE[tbl])||'shift', id, 'rejected', loadShiftAllRequests);
 };
 
 // ── Auth ──
@@ -2765,7 +2818,7 @@ function loadProfile(){
     document.getElementById('app').style.display = '';
     loadLeaveSettings();
     loadDashboard();
-    loadAllUsers();
+    loadPositions().then(loadAllUsers);
   });
 }
 
@@ -3427,6 +3480,116 @@ function loadSideJobFeatureSettings(){
 }
 
 // ══════════════════════════════════════════════
+//  役職・ワークフロー エンジン（共通処理）
+// ══════════════════════════════════════════════
+var _positions = [];
+
+function loadPositions(){
+  return sb.from('positions').select('*').order('sort_order').then(function(r){
+    if(!r.error) _positions = r.data||[];
+    populatePositionSelects();
+    return _positions;
+  });
+}
+function positionLevel(positionId){
+  var p = _positions.find(function(x){return x.id===positionId;});
+  return p ? p.level : 1;
+}
+function positionName(positionId){
+  var p = _positions.find(function(x){return x.id===positionId;});
+  return p ? p.name : '（未設定）';
+}
+function myPositionLevel(){
+  return positionLevel(myProfile && myProfile.position_id);
+}
+
+var REQUEST_TABLE_MAP = {
+  leave:'leave_requests', overtime:'overtime_requests', shift:'shift_requests',
+  shift_swap:'shift_swap_requests', shift_wish:'shift_wish_requests', side_job:'side_job_requests'
+};
+var REQUEST_TYPE_LABEL = {
+  leave:'休暇申請', overtime:'残業申請', shift:'シフト申請',
+  shift_swap:'シフト交換申請', shift_wish:'シフト希望申請', side_job:'副業申請'
+};
+
+// 申請1件分のワークフロー進行状況を取得（インスタンスが無ければnull＝旧方式で処理）
+function fetchApprovalInstance(requestType, requestId){
+  return sb.from('approval_instances').select('*, approval_instance_steps(*)')
+    .eq('request_type', requestType).eq('request_id', requestId)
+    .eq('status','in_progress').maybeSingle()
+    .then(function(r){
+      if(r.error || !r.data) return null;
+      var inst = r.data;
+      inst.steps = (inst.approval_instance_steps||[]).sort(function(a,b){return a.step_order-b.step_order;});
+      return inst;
+    });
+}
+// 一覧表示用：複数申請分のワークフロー状況をまとめて取得
+function fetchApprovalInstancesBulk(requestType, requestIds){
+  if(!requestIds || !requestIds.length) return Promise.resolve({});
+  return sb.from('approval_instances').select('*, approval_instance_steps(*)')
+    .eq('request_type', requestType).in('request_id', requestIds)
+    .then(function(r){
+      var map = {};
+      (r.data||[]).forEach(function(inst){
+        inst.steps = (inst.approval_instance_steps||[]).sort(function(a,b){return a.step_order-b.step_order;});
+        map[inst.request_id] = inst;
+      });
+      return map;
+    });
+}
+// 一覧テーブル用：ステップ進行状況バッジ
+function renderStepProgressBadge(inst){
+  if(!inst || inst.status!=='in_progress') return '<span style="font-size:11px;color:var(--muted)">通常承認</span>';
+  var total = inst.steps.length;
+  var cur = inst.steps.find(function(s){return s.step_order===inst.current_step;});
+  var lvLabel = cur ? ('Lv'+cur.min_position_level+'以上') : '';
+  return '<span class="badge badge-blue" style="font-size:10px" title="ステップ '+inst.current_step+'/'+total+'">📶 '+inst.current_step+'/'+total+'（'+lvLabel+'）</span>';
+}
+// 承認/否認の実行（多段階ワークフロー対応。ワークフロー未設定の申請種別は従来どおり直接更新）
+window.actOnApproval = function(requestType, requestId, action, reloadFn){
+  var tbl = REQUEST_TABLE_MAP[requestType];
+  if(!tbl) return;
+  fetchApprovalInstance(requestType, requestId).then(function(inst){
+    if(!inst){
+      var payload = {status:action};
+      if(action==='rejected'){
+        var c = prompt('却下理由を入力してください（任意）:');
+        if(c===null) return;
+        if(tbl==='side_job_requests' && c) payload.admin_comment = c;
+      }
+      sb.from(tbl).update(payload).eq('id',requestId).then(function(r){
+        if(r.error){ showToast('処理失敗: '+r.error.message,'red'); return; }
+        showToast(action==='approved'?'✅ 承認しました':'否認しました', action==='approved'?'green':'amber');
+        reloadFn && reloadFn();
+      });
+      return;
+    }
+    var curStep = inst.steps.find(function(s){return s.step_order===inst.current_step && s.status==='pending';});
+    if(!curStep){ showToast('この申請は既に処理されています','amber'); reloadFn && reloadFn(); return; }
+    var myLv = myPositionLevel();
+    if(myLv < curStep.min_position_level){
+      showToast('承認権限がありません（必要役職レベル: Lv'+curStep.min_position_level+'以上、あなたはLv'+myLv+'）','red');
+      return;
+    }
+    var cmt = null;
+    if(action==='rejected'){
+      cmt = prompt('却下理由を入力してください（任意）:');
+      if(cmt===null) return;
+    } else if(inst.current_step < inst.steps.length){
+      if(!confirm('第'+inst.current_step+'段階として承認します。次の承認者に進みます。よろしいですか？')) return;
+    }
+    sb.from('approval_instance_steps').update({
+      status: action, acted_by: (myProfile&&myProfile.id)||null, acted_at: new Date().toISOString(), comment: cmt||null
+    }).eq('id', curStep.id).then(function(r){
+      if(r.error){ showToast('処理失敗: '+r.error.message,'red'); return; }
+      showToast(action==='approved'?'✅ 承認しました':'否認しました', action==='approved'?'green':'amber');
+      reloadFn && reloadFn();
+    });
+  });
+};
+
+// ══════════════════════════════════════════════
 //  副業申請 承認管理
 // ══════════════════════════════════════════════
 window.loadSideJobApprovals = function(){
@@ -3447,45 +3610,38 @@ window.loadSideJobApprovals = function(){
     var empMap={};
     (rs[1].data||[]).forEach(function(e){empMap[e.auth_id]=e;});
     if(!reqs.length){
-      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">申請がありません</td></tr>';
+      tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">申請がありません</td></tr>';
       return;
     }
     var statusMap={pending:'<span class="badge badge-amber">承認待ち</span>',approved:'<span class="badge badge-green">承認済</span>',rejected:'<span class="badge badge-red">却下</span>'};
-    tbody.innerHTML = reqs.map(function(r){
-      var emp = empMap[r.user_id]||{name:'不明',department:'—'};
-      var ops = r.status==='pending'
-        ?'<button class="btn btn-sm btn-primary" onclick="approveSideJob(\''+r.id+'\')">承認</button> <button class="btn btn-sm btn-red" onclick="rejectSideJob(\''+r.id+'\')">却下</button>'
-        :'<span style="font-size:11px;color:var(--muted)">処理済</span>';
-      return '<tr>'
-        +'<td><strong>'+escHtml(emp.name)+'</strong><div style="font-size:11px;color:var(--muted)">'+escHtml(emp.department||'')+'</div></td>'
-        +'<td>'+escHtml(r.company_name||'')+'</td>'
-        +'<td style="font-size:11px;max-width:160px;word-break:break-all">'+escHtml(r.job_description||'')+'</td>'
-        +'<td>'+(r.start_date||'—')+'</td>'
-        +'<td style="text-align:center">'+(r.weekly_hours||0)+'h</td>'
-        +'<td style="font-size:11px">'+new Date(r.created_at).toLocaleDateString('ja-JP')+'</td>'
-        +'<td>'+(statusMap[r.status]||r.status)+'</td>'
-        +'<td>'+ops+'</td>'
-        +'</tr>';
-    }).join('');
+    fetchApprovalInstancesBulk('side_job', reqs.map(function(r){return r.id;})).then(function(instMap){
+      tbody.innerHTML = reqs.map(function(r){
+        var emp = empMap[r.user_id]||{name:'不明',department:'—'};
+        var ops = r.status==='pending'
+          ?'<button class="btn btn-sm btn-primary" onclick="approveSideJob(\''+r.id+'\')">承認</button> <button class="btn btn-sm btn-red" onclick="rejectSideJob(\''+r.id+'\')">却下</button>'
+          :'<span style="font-size:11px;color:var(--muted)">処理済</span>';
+        return '<tr>'
+          +'<td><strong>'+escHtml(emp.name)+'</strong><div style="font-size:11px;color:var(--muted)">'+escHtml(emp.department||'')+'</div></td>'
+          +'<td>'+escHtml(r.company_name||'')+'</td>'
+          +'<td style="font-size:11px;max-width:160px;word-break:break-all">'+escHtml(r.job_description||'')+'</td>'
+          +'<td>'+(r.start_date||'—')+'</td>'
+          +'<td style="text-align:center">'+(r.weekly_hours||0)+'h</td>'
+          +'<td style="font-size:11px">'+new Date(r.created_at).toLocaleDateString('ja-JP')+'</td>'
+          +'<td>'+(statusMap[r.status]||r.status)+'</td>'
+          +'<td>'+renderStepProgressBadge(instMap[r.id])+'</td>'
+          +'<td>'+ops+'</td>'
+          +'</tr>';
+      }).join('');
+    });
   });
 };
 
 window.approveSideJob = function(id){
-  sb.from('side_job_requests').update({status:'approved'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー: '+r.error.message,'red');return;}
-    showToast('副業申請を承認しました','green');
-    loadSideJobApprovals();
-  });
+  actOnApproval('side_job', id, 'approved', loadSideJobApprovals);
 };
 
 window.rejectSideJob = function(id){
-  var comment = prompt('却下理由を入力してください（任意）:');
-  if(comment===null) return;
-  sb.from('side_job_requests').update({status:'rejected',admin_comment:comment||null}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー: '+r.error.message,'red');return;}
-    showToast('副業申請を却下しました','amber');
-    loadSideJobApprovals();
-  });
+  actOnApproval('side_job', id, 'rejected', loadSideJobApprovals);
 };
 
 // ══════════════════════════════════════════════
@@ -3495,6 +3651,111 @@ function loadApprovals(){
   loadLeaveApprovals(); loadOtApprovals(); loadPunchApprovals();
   loadShiftApprovals(); loadSideJobApprovals();
 }
+
+// ══════════════════════════════════════════════
+//  ワークフロー設定（申請承認 > ワークフロー設定タブ）
+// ══════════════════════════════════════════════
+var _workflows = [];
+
+window.loadWorkflowConfig = function(){
+  var wrap = document.getElementById('workflowCfgWrap');
+  if(!wrap) return;
+  wrap.innerHTML = '読み込み中...';
+  Promise.all([
+    sb.from('approval_workflows').select('*, approval_workflow_steps(*)').order('request_type'),
+    loadPositions()
+  ]).then(function(rs){
+    var wfs = rs[0].data||[];
+    wfs.forEach(function(w){ w.steps = (w.approval_workflow_steps||[]).sort(function(a,b){return a.step_order-b.step_order;}); });
+    _workflows = wfs;
+    renderWorkflowConfig();
+  }).catch(function(e){
+    wrap.innerHTML = '<div style="color:var(--red)">取得エラー: '+(e.message||e)+'</div>';
+  });
+};
+
+function renderWorkflowConfig(){
+  var wrap = document.getElementById('workflowCfgWrap');
+  if(!wrap) return;
+  if(!_positions.length){
+    wrap.innerHTML = '<div style="color:var(--amber)">先に「ユーザー管理 &gt; 役職管理」で役職を登録してください。</div>';
+    return;
+  }
+  var order = ['leave','overtime','shift','shift_swap','shift_wish','side_job'];
+  wrap.innerHTML = order.map(function(rt){
+    var w = _workflows.find(function(x){return x.request_type===rt;});
+    if(!w){
+      return '<div class="card" style="margin-bottom:10px"><div class="card-title" style="margin:0">'+(REQUEST_TYPE_LABEL[rt]||rt)+'</div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-top:6px">ワークフロー未作成（現在は1段階承認のみで動作します）</div></div>';
+    }
+    var stepsHtml = w.steps.map(function(s,i){
+      return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:8px;background:#f8fafc;border-radius:8px;flex-wrap:wrap">'
+        +'<span style="font-size:12px;font-weight:700;width:60px">第'+(i+1)+'段階</span>'
+        +'<select class="form-control" style="width:200px" onchange="updateWorkflowStepLevel(\''+s.id+'\',this.value)">'
+          + _positions.map(function(p){ return '<option value="'+p.level+'"'+(p.level===s.min_position_level?' selected':'')+'>'+escHtml(p.name)+'（Lv'+p.level+'）以上</option>'; }).join('')
+        +'</select>'
+        +'<select class="form-control" style="width:140px" onchange="updateWorkflowStepScope(\''+s.id+'\',this.value)">'
+          +'<option value="same_department"'+(s.scope==='same_department'?' selected':'')+'>同部署のみ</option>'
+          +'<option value="company"'+(s.scope==='company'?' selected':'')+'>全社</option>'
+        +'</select>'
+        +(w.steps.length>1?'<button class="btn btn-outline btn-sm" onclick="removeWorkflowStep(\''+s.id+'\',\''+w.id+'\')">削除</button>':'')
+        +'</div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<div class="card-title" style="margin:0">'+(REQUEST_TYPE_LABEL[rt]||rt)+'</div>'
+      +'<label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">'
+      +'<input type="checkbox" '+(w.is_active?'checked':'')+' onchange="toggleWorkflowActive(\''+w.id+'\',this.checked)"> 有効</label>'
+      +'</div>'
+      +stepsHtml
+      +'<button class="btn btn-outline btn-sm" onclick="addWorkflowStep(\''+w.id+'\')">＋ 段階を追加</button>'
+      +'</div>';
+  }).join('');
+}
+
+window.toggleWorkflowActive = function(id, active){
+  sb.from('approval_workflows').update({is_active:active}).eq('id',id).then(function(r){
+    if(r.error){ showToast('更新エラー: '+r.error.message,'red'); return; }
+    showToast(active?'ワークフローを有効化しました':'ワークフローを無効化しました（1段階承認に戻ります）','green');
+    loadWorkflowConfig();
+  });
+};
+window.updateWorkflowStepLevel = function(stepId, level){
+  sb.from('approval_workflow_steps').update({min_position_level:parseInt(level)}).eq('id',stepId).then(function(r){
+    if(r.error){ showToast('更新エラー: '+r.error.message,'red'); return; }
+    showToast('保存しました','green');
+  });
+};
+window.updateWorkflowStepScope = function(stepId, scope){
+  sb.from('approval_workflow_steps').update({scope:scope}).eq('id',stepId).then(function(r){
+    if(r.error){ showToast('更新エラー: '+r.error.message,'red'); return; }
+    showToast('保存しました','green');
+  });
+};
+window.addWorkflowStep = function(workflowId){
+  var w = _workflows.find(function(x){return x.id===workflowId;});
+  var nextOrder = w ? w.steps.length+1 : 1;
+  sb.from('approval_workflow_steps').insert({workflow_id:workflowId, step_order:nextOrder, min_position_level:1, scope:'same_department'}).then(function(r){
+    if(r.error){ showToast('追加エラー: '+r.error.message,'red'); return; }
+    showToast('段階を追加しました','green');
+    loadWorkflowConfig();
+  });
+};
+window.removeWorkflowStep = function(stepId, workflowId){
+  if(!confirm('この段階を削除しますか？')) return;
+  sb.from('approval_workflow_steps').delete().eq('id',stepId).then(function(r){
+    if(r.error){ showToast('削除エラー: '+r.error.message,'red'); return; }
+    sb.from('approval_workflow_steps').select('*').eq('workflow_id',workflowId).order('step_order').then(function(r2){
+      var steps = r2.data||[];
+      Promise.all(steps.map(function(s,i){
+        return (s.step_order!==i+1) ? sb.from('approval_workflow_steps').update({step_order:i+1}).eq('id',s.id) : Promise.resolve();
+      })).then(function(){
+        showToast('段階を削除しました','amber');
+        loadWorkflowConfig();
+      });
+    });
+  });
+};
 
 // ── シフト申請承認（page-approval） ──
 window.loadShiftApprovals = function(){
@@ -3545,39 +3806,45 @@ window.loadShiftApprovals = function(){
     if(kubun) all = all.filter(function(r){ return r.kubun===kubun; });
     all.sort(function(a,b){return a.created<b.created?1:-1;});
     if(!all.length){
-      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">未承認のシフト申請はありません</td></tr>';
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">未承認のシフト申請はありません</td></tr>';
       return;
     }
-    tbody.innerHTML = all.map(function(r){
-      var id=r.id, tbl=r.tbl;
-      return '<tr>'
-        +'<td>'+kBadge[r.kubun]+'</td>'
-        +'<td><strong>'+r.name+'</strong></td>'
-        +'<td>'+r.dept+'</td>'
-        +'<td>'+r.date+'</td>'
-        +'<td style="font-size:12px">'+r.detail+'</td>'
-        +'<td style="font-size:12px;color:var(--muted)">'+r.created.slice(0,10)+'</td>'
-        +'<td style="white-space:nowrap">'
-        +'<button class="btn btn-sm btn-green" onclick="approveShiftApp(\''+id+'\',\''+tbl+'\')">承認</button> '
-        +'<button class="btn btn-sm btn-red" onclick="rejectShiftApp(\''+id+'\',\''+tbl+'\')">否認</button>'
-        +'</td></tr>';
-    }).join('');
+    Promise.all([
+      fetchApprovalInstancesBulk('shift', all.filter(function(r){return r.tbl==='shift_requests';}).map(function(r){return r.id;})),
+      fetchApprovalInstancesBulk('shift_swap', all.filter(function(r){return r.tbl==='shift_swap_requests';}).map(function(r){return r.id;})),
+      fetchApprovalInstancesBulk('shift_wish', all.filter(function(r){return r.tbl==='shift_wish_requests';}).map(function(r){return r.id;}))
+    ]).then(function(maps){
+      var instByKey = {};
+      Object.assign(instByKey, maps[0]);
+      Object.keys(maps[1]).forEach(function(k){ instByKey[k]=maps[1][k]; });
+      Object.keys(maps[2]).forEach(function(k){ instByKey[k]=maps[2][k]; });
+      tbody.innerHTML = all.map(function(r){
+        var id=r.id, tbl=r.tbl;
+        return '<tr>'
+          +'<td>'+kBadge[r.kubun]+'</td>'
+          +'<td><strong>'+r.name+'</strong></td>'
+          +'<td>'+r.dept+'</td>'
+          +'<td>'+r.date+'</td>'
+          +'<td style="font-size:12px">'+r.detail+'</td>'
+          +'<td style="font-size:12px;color:var(--muted)">'+r.created.slice(0,10)+'</td>'
+          +'<td>'+renderStepProgressBadge(instByKey[id])+'</td>'
+          +'<td style="white-space:nowrap">'
+          +'<button class="btn btn-sm btn-green" onclick="approveShiftApp(\''+id+'\',\''+tbl+'\')">承認</button> '
+          +'<button class="btn btn-sm btn-red" onclick="rejectShiftApp(\''+id+'\',\''+tbl+'\')">否認</button>'
+          +'</td></tr>';
+      }).join('');
+    });
   }).catch(function(e){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">取得エラー</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">取得エラー</td></tr>';
   });
 };
 
+var SHIFT_TBL_TO_TYPE = {shift_requests:'shift', shift_swap_requests:'shift_swap', shift_wish_requests:'shift_wish'};
 window.approveShiftApp = function(id, tbl){
-  sb.from(tbl).update({status:'approved'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー','red');return;}
-    showToast('承認しました','green'); loadShiftApprovals();
-  });
+  actOnApproval(SHIFT_TBL_TO_TYPE[tbl]||'shift', id, 'approved', loadShiftApprovals);
 };
 window.rejectShiftApp = function(id, tbl){
-  sb.from(tbl).update({status:'rejected'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー','red');return;}
-    showToast('否認しました','amber'); loadShiftApprovals();
-  });
+  actOnApproval(SHIFT_TBL_TO_TYPE[tbl]||'shift', id, 'rejected', loadShiftApprovals);
 };
 
 // ══════════════════════════════════════════════
@@ -3827,13 +4094,16 @@ function loadLeaveApprovals(){
     sb.from('employees').select('auth_id,name').eq('is_active',true)
   ]).then(function(rs){
     const tbody = document.getElementById('leaveAppTbl');
-    if(rs[0].error||!rs[0].data||!rs[0].data.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">未承認申請なし</td></tr>';return;}
+    if(rs[0].error||!rs[0].data||!rs[0].data.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">未承認申請なし</td></tr>';return;}
     const empMap={};
     (rs[1].data||[]).forEach(function(e){ empMap[e.auth_id]=e.name; });
-    tbody.innerHTML = rs[0].data.map(function(req){
-      const name=empMap[req.user_id]||'—';
-      return '<tr><td>'+name+'</td><td>'+req.leave_type+'</td><td>'+req.start_date+' 〜 '+req.end_date+'</td><td>'+(req.reason||'')+'</td><td>'+(req.created_at||'').slice(0,10)+'</td><td><button class="btn btn-sm btn-green" onclick="approveLeave(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectLeave(&quot;'+req.id+'&quot;)">否認</button></td></tr>';
-    }).join('');
+    var reqs = rs[0].data;
+    fetchApprovalInstancesBulk('leave', reqs.map(function(r){return r.id;})).then(function(instMap){
+      tbody.innerHTML = reqs.map(function(req){
+        const name=empMap[req.user_id]||'—';
+        return '<tr><td>'+name+'</td><td>'+req.leave_type+'</td><td>'+req.start_date+' 〜 '+req.end_date+'</td><td>'+(req.reason||'')+'</td><td>'+(req.created_at||'').slice(0,10)+'</td><td>'+renderStepProgressBadge(instMap[req.id])+'</td><td><button class="btn btn-sm btn-green" onclick="approveLeave(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectLeave(&quot;'+req.id+'&quot;)">否認</button></td></tr>';
+      }).join('');
+    });
   });
 }
 function loadOtApprovals(){
@@ -3842,12 +4112,15 @@ function loadOtApprovals(){
     sb.from('employees').select('auth_id,name').eq('is_active',true)
   ]).then(function(rs){
     const tbody = document.getElementById('otAppTbl');
-    if(rs[0].error||!rs[0].data||!rs[0].data.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">未承認申請なし</td></tr>';return;}
+    if(rs[0].error||!rs[0].data||!rs[0].data.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">未承認申請なし</td></tr>';return;}
     const empMap={};
     (rs[1].data||[]).forEach(function(e){ empMap[e.auth_id]=e.name; });
-    tbody.innerHTML = rs[0].data.map(function(req){
-      return '<tr><td>'+(empMap[req.user_id]||'—')+'</td><td>'+req.overtime_date+'</td><td>'+req.hours+'h</td><td>'+(req.reason||'')+'</td><td>'+(req.created_at||'').slice(0,10)+'</td><td><button class="btn btn-sm btn-green" onclick="approveOt(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectOt(&quot;'+req.id+'&quot;)">否認</button></td></tr>';
-    }).join('');
+    var reqs = rs[0].data;
+    fetchApprovalInstancesBulk('overtime', reqs.map(function(r){return r.id;})).then(function(instMap){
+      tbody.innerHTML = reqs.map(function(req){
+        return '<tr><td>'+(empMap[req.user_id]||'—')+'</td><td>'+req.overtime_date+'</td><td>'+req.hours+'h</td><td>'+(req.reason||'')+'</td><td>'+(req.created_at||'').slice(0,10)+'</td><td>'+renderStepProgressBadge(instMap[req.id])+'</td><td><button class="btn btn-sm btn-green" onclick="approveOt(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectOt(&quot;'+req.id+'&quot;)">否認</button></td></tr>';
+      }).join('');
+    });
   });
 }
 function loadPunchApprovals(){
@@ -3860,28 +4133,16 @@ function loadPunchApprovals(){
   });
 }
 window.approveLeave = function(id){
-  sb.from('leave_requests').update({status:'approved'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー','red');return;}
-    showToast('承認しました','green'); loadLeaveApprovals(); loadDashboard();
-  });
+  actOnApproval('leave', id, 'approved', function(){ loadLeaveApprovals(); loadDashboard(); });
 };
 window.rejectLeave = function(id){
-  sb.from('leave_requests').update({status:'rejected'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー','red');return;}
-    showToast('否認しました','amber'); loadLeaveApprovals(); loadDashboard();
-  });
+  actOnApproval('leave', id, 'rejected', function(){ loadLeaveApprovals(); loadDashboard(); });
 };
 window.approveOt = function(id){
-  sb.from('overtime_requests').update({status:'approved'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー','red');return;}
-    showToast('承認しました','green'); loadOtApprovals();
-  });
+  actOnApproval('overtime', id, 'approved', loadOtApprovals);
 };
 window.rejectOt = function(id){
-  sb.from('overtime_requests').update({status:'rejected'}).eq('id',id).then(function(r){
-    if(r.error){showToast('エラー','red');return;}
-    showToast('否認しました','amber'); loadOtApprovals();
-  });
+  actOnApproval('overtime', id, 'rejected', loadOtApprovals);
 };
 
 // ── Leave ──
@@ -4207,6 +4468,90 @@ window.populateDeptSelects = function(){
     sel.innerHTML=opts;
   });
 }
+// ───────────── 役職(position) CRUD ─────────────
+// loadPositions() 本体はワークフローエンジン共通処理側で定義済み
+function renderPositions(){
+  var tb = document.getElementById('positionMasterTbl');
+  if(!tb) return;
+  if(!_positions.length){
+    tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">役職がありません。「＋ 役職を追加」から登録してください。</td></tr>';
+    return;
+  }
+  var cntMap={};
+  (allUsers||[]).forEach(function(e){ if(e.position_id) cntMap[e.position_id]=(cntMap[e.position_id]||0)+1; });
+  tb.innerHTML = _positions.map(function(p){
+    var cnt = cntMap[p.id]||0;
+    return '<tr>'
+      +'<td style="text-align:center"><span class="badge badge-blue">Lv'+p.level+'</span></td>'
+      +'<td><strong>'+escHtml(p.name||'')+'</strong></td>'
+      +'<td style="text-align:center">'+cnt+'人</td>'
+      +'<td><button class="btn btn-outline btn-sm" onclick="openPositionModal(\''+p.id+'\')">編集</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+window.openPositionModal = function(id){
+  document.getElementById('posId').value = '';
+  document.getElementById('posName').value = '';
+  document.getElementById('posLevel').value = '';
+  document.getElementById('posDelBtn').style.display = 'none';
+  document.getElementById('positionModalTitle').innerHTML = '🎖️ 役職を追加<span class="modal-close" onclick="closeModal(\'positionModal\')">×</span>';
+  if(id){
+    var p = _positions.find(function(x){ return x.id===id; });
+    if(!p) return;
+    document.getElementById('posId').value = p.id;
+    document.getElementById('posName').value = p.name||'';
+    document.getElementById('posLevel').value = p.level;
+    document.getElementById('posDelBtn').style.display = '';
+    document.getElementById('positionModalTitle').innerHTML = '🎖️ 役職を編集<span class="modal-close" onclick="closeModal(\'positionModal\')">×</span>';
+  }
+  openModal('positionModal');
+};
+
+window.savePosition = function(){
+  var id    = document.getElementById('posId').value.trim();
+  var name  = document.getElementById('posName').value.trim();
+  var level = parseInt(document.getElementById('posLevel').value);
+  if(!name){ showToast('役職名を入力してください','amber'); return; }
+  if(!level && level!==0){ showToast('レベルを入力してください','amber'); return; }
+  var payload = { name: name, level: level };
+  var p = id
+    ? sb.from('positions').update(payload).eq('id',id)
+    : sb.from('positions').insert(Object.assign({sort_order:level}, payload));
+  p.then(function(r){
+    if(r.error){ showToast('保存エラー: '+r.error.message,'red'); return; }
+    showToast(id?'役職を更新しました':'役職を追加しました','green');
+    closeModal('positionModal');
+    loadPositions().then(renderPositions);
+  });
+};
+
+window.deletePosition = function(){
+  var id   = document.getElementById('posId').value.trim();
+  var name = document.getElementById('posName').value.trim();
+  if(!id) return;
+  if(!confirm('「'+name+'」を削除しますか？\n※この役職を持つ職員の役職は未設定になり、この役職を条件とするワークフローステップも動作しなくなります。')) return;
+  sb.from('positions').delete().eq('id',id).then(function(r){
+    if(r.error){ showToast('削除エラー: '+r.error.message,'red'); return; }
+    showToast('削除しました','amber');
+    closeModal('positionModal');
+    loadPositions().then(renderPositions);
+  });
+};
+
+function populatePositionSelects(){
+  var selIds = ['editUserPositionId','newUserPositionId'];
+  selIds.forEach(function(sid){
+    var sel = document.getElementById(sid); if(!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">未設定</option>' + _positions.map(function(p){
+      return '<option value="'+p.id+'"'+(p.id===cur?' selected':'')+'>'+escHtml(p.name)+'（Lv'+p.level+'）</option>';
+    }).join('');
+    sel.value = cur;
+  });
+  renderPositions();
+}
+
 // ───────────── 課(section) CRUD ─────────────
 var _sections = [];
 
@@ -4447,7 +4792,7 @@ function loadAllUsers(){
 }
 function renderUserTable(users){
   const tbody = document.getElementById('usersTbl');
-  if(!users||!users.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">ユーザーなし</td></tr>';return;}
+  if(!users||!users.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">ユーザーなし</td></tr>';return;}
   tbody.innerHTML = users.map(function(u){
     const roleMap={'管理者':'badge-red','部門長':'badge-blue','一般':'badge-gray'};
     const emailHtml = u.email
@@ -4466,6 +4811,7 @@ function renderUserTable(users){
       +'<td>'+emailHtml+'</td>'
       +'<td>'+(u.department||'—')+'</td>'+'<td style="font-size:11px;color:var(--muted)">'+(u.section||'—')+'</td>'
       +'<td><span class="badge '+(roleMap[u.role]||'badge-gray')+'">'+u.role+'</span></td>'
+      +'<td>'+(u.position_id?escHtml(positionName(u.position_id)):'<span style="color:var(--muted)">—</span>')+'</td>'
       +'<td>'+(u.hire_date||'—')+'</td>'
       +'<td style="text-align:center">'+leaveCol+'</td>'
       +'<td><span class="badge '+(u.is_active?'badge-green':'badge-gray')+'">'+(u.is_active?'有効':'無効')+'</span></td>'
@@ -4508,7 +4854,7 @@ window.openEditUser = function(id){
   setTimeout(function(){ document.getElementById('editUserSection').value = u.section||''; }, 0);
   document.getElementById('editUserEmp').value = u.employment_type||'正社員';
   document.getElementById('editUserRole').value = u.role||'一般';
-  var posEl = document.getElementById('editUserPosition'); if(posEl) posEl.value = u.position||'';
+  var posIdEl = document.getElementById('editUserPositionId'); if(posIdEl) posIdEl.value = u.position_id||'';
   document.getElementById('editUserAnnualLeave').value = u.annual_leave_days != null ? u.annual_leave_days : 6;
   document.getElementById('editUserLeave').value = u.paid_leave_remaining||0;
   document.getElementById('editUserCarryOver').value = u.carry_over_days||0;
@@ -4580,7 +4926,8 @@ window.saveUser = function(){
     section:                g('editUserSection'),
     employment_type:        g('editUserEmp'),
     role:                   g('editUserRole'),
-    position:               g('editUserPosition'),
+    position_id:            g('editUserPositionId')||null,
+    position:               positionName(g('editUserPositionId')||null),
     annual_leave_days:      gi('editUserAnnualLeave')||6,
     paid_leave_remaining:   gf('editUserLeave'),
     carry_over_days:        gf('editUserCarryOver'),
@@ -4718,6 +5065,7 @@ window.addUser = function(){
   const section = document.getElementById('newUserSection')?document.getElementById('newUserSection').value:'';
   const emp     = document.getElementById('newUserEmp').value;
   const role  = document.getElementById('newUserRole').value;
+  const positionId = document.getElementById('newUserPositionId') ? document.getElementById('newUserPositionId').value : '';
   const join  = document.getElementById('newUserJoin').value;
   const leave = parseInt(document.getElementById('newUserLeave').value)||10;
 
@@ -4772,6 +5120,10 @@ window.addUser = function(){
     msgEl.style.display = 'none';
     showToast('✅ ' + name + 'を追加しました（ログイン可能）','green');
     closeModal('addUserModal');
+    // 役職を設定（作成APIが対応していないフィールドのため追ってUPDATE）
+    if(positionId){
+      sb.from('employees').update({position_id:positionId, position:positionName(positionId)}).eq('email',email).then(function(){ loadAllUsers(); });
+    }
     // フォームリセット
     ['newUserName','newUserEmail','newUserPass','newUserJoin'].forEach(function(id){
       const el = document.getElementById(id); if(el) el.value = '';
