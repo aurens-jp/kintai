@@ -4124,14 +4124,31 @@ function loadOtApprovals(){
   });
 }
 function loadPunchApprovals(){
-  sb.from('punch_records').select('*, employees(name)').eq('note','打刻申請').then(function(r){
+  sb.from('punch_records').select('*, employees(name)').like('note','打刻申請%').then(function(r){
     const tbody = document.getElementById('punchAppTbl');
     if(r.error||!r.data||!r.data.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">未承認申請なし</td></tr>';return;}
     tbody.innerHTML = r.data.map(function(p){
-      return '<tr><td>'+(p.employees&&p.employees.name||'—')+'</td><td>'+p.punched_at.slice(0,10)+'</td><td>'+p.punch_type+'</td><td>'+p.punched_at.slice(11,16)+'</td><td>'+(p.note||'')+'</td><td><button class="btn btn-sm btn-green">承認</button></td></tr>';
+      return '<tr><td>'+(p.employees&&p.employees.name||'—')+'</td><td>'+p.punched_at.slice(0,10)+'</td><td>'+p.punch_type+'</td><td>'+p.punched_at.slice(11,16)+'</td><td style="font-size:11px">'+escHtml(p.note||'')+'</td>'
+        +'<td><button class="btn btn-sm btn-green" onclick="approvePunchCorrection(\''+p.id+'\')">承認</button> <button class="btn btn-sm btn-red" onclick="rejectPunchCorrection(\''+p.id+'\')">却下</button></td></tr>';
     }).join('');
   });
 }
+window.approvePunchCorrection = function(id){
+  // note をクリアして通常の打刻記録として確定させる（承認待ち一覧から外れる）
+  sb.from('punch_records').update({note:null}).eq('id',id).then(function(r){
+    if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
+    showToast('✅ 打刻修正を承認しました','green');
+    loadPunchApprovals();
+  });
+};
+window.rejectPunchCorrection = function(id){
+  if(!confirm('この打刻修正申請を却下しますか？（打刻記録自体は削除されます）')) return;
+  sb.from('punch_records').delete().eq('id',id).then(function(r){
+    if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
+    showToast('却下しました','amber');
+    loadPunchApprovals();
+  });
+};
 window.approveLeave = function(id){
   actOnApproval('leave', id, 'approved', function(){ loadLeaveApprovals(); loadDashboard(); });
 };
