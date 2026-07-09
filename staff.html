@@ -651,23 +651,24 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
   <div style="padding:0 16px">
     <div class="f-group">
       <label class="f-label">取得区分</label>
-      <select class="f-ctrl"><option>全日</option><option>午前半休</option><option>午後半休</option><option>時間単位</option></select>
+      <select class="f-ctrl" id="leaveFullUnit"><option>全日</option><option>午前半休</option><option>午後半休</option><option>時間単位</option></select>
     </div>
     <div class="f-group">
       <label class="f-label" data-i18n="form.start_date">開始日</label>
-      <input class="f-ctrl" type="date" value="2026-07-05">
+      <input class="f-ctrl" type="date" id="leaveFullStart" value="2026-07-05">
     </div>
     <div class="f-group">
       <label class="f-label" data-i18n="form.end_date">終了日</label>
-      <input class="f-ctrl" type="date" value="2026-07-05">
+      <input class="f-ctrl" type="date" id="leaveFullEnd" value="2026-07-05">
     </div>
     <div class="f-group">
       <label class="f-label">理由（任意）</label>
-      <textarea class="f-ctrl" rows="2" placeholder="私用のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="leaveFullReason" placeholder="私用のため"></textarea>
     </div>
+    <div id="leaveFullErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
     <div style="display:flex;gap:8px">
       <button class="btn-app btn-gray" onclick="goBack()" style="flex:1">キャンセル</button>
-      <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')" style="flex:2">申請する</button>
+      <button class="btn-app btn-pri" onclick="submitLeaveFull()" style="flex:2">申請する</button>
     </div>
   </div>
 </div>
@@ -677,24 +678,25 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
   <div style="padding:0 16px">
     <div class="f-group">
       <label class="f-label">取得日</label>
-      <input class="f-ctrl" type="date" value="2026-07-10">
+      <input class="f-ctrl" type="date" id="leaveHalfDate" value="2026-07-10">
     </div>
     <div class="f-group">
       <label class="f-label">区分</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <label style="display:flex;align-items:center;gap:8px;padding:14px;border:2px solid var(--pri);border-radius:13px;cursor:pointer;background:var(--pri-l)">
-          <input type="radio" name="half" checked style="accent-color:var(--pri)"><span style="font-weight:700;color:var(--pri)">午前半休</span>
+          <input type="radio" name="half" id="leaveHalfAm" checked style="accent-color:var(--pri)"><span style="font-weight:700;color:var(--pri)">午前半休</span>
         </label>
         <label style="display:flex;align-items:center;gap:8px;padding:14px;border:1.5px solid var(--border);border-radius:13px;cursor:pointer">
-          <input type="radio" name="half"><span style="font-weight:700">午後半休</span>
+          <input type="radio" name="half" id="leaveHalfPm"><span style="font-weight:700">午後半休</span>
         </label>
       </div>
     </div>
     <div class="f-group">
       <label class="f-label" data-i18n="form.reason">理由</label>
-      <textarea class="f-ctrl" rows="2" placeholder="通院のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="leaveHalfReason" placeholder="通院のため"></textarea>
     </div>
-    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="leaveHalfErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitLeaveHalf()">申請する</button>
   </div>
 </div>
 
@@ -703,14 +705,14 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
   <div style="padding:0 16px">
     <div class="f-group">
       <label class="f-label">取得日</label>
-      <input class="f-ctrl" type="date" value="2026-07-08">
+      <input class="f-ctrl" type="date" id="leaveHourDate" value="2026-07-08">
     </div>
     <div class="f-group">
       <label class="f-label">取得時間帯</label>
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
-        <input class="f-ctrl" type="time" value="13:00">
+        <input class="f-ctrl" type="time" id="leaveHourStart" value="13:00">
         <span style="color:var(--muted)">〜</span>
-        <input class="f-ctrl" type="time" value="15:00">
+        <input class="f-ctrl" type="time" id="leaveHourEnd" value="15:00">
       </div>
     </div>
     <div class="card-app" style="background:#f0fdf4;border-color:#bbf7d0;margin:0 0 16px">
@@ -718,9 +720,10 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
     <div class="f-group">
       <label class="f-label" data-i18n="form.reason">理由</label>
-      <textarea class="f-ctrl" rows="2" placeholder="通院のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="leaveHourReason" placeholder="通院のため"></textarea>
     </div>
-    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="leaveHourErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitLeaveHourly()">申請する</button>
   </div>
 </div>
 
@@ -729,25 +732,26 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
   <div style="padding:0 16px">
     <div class="f-group">
       <label class="f-label">残業日</label>
-      <input class="f-ctrl" type="date" value="2026-07-02">
+      <input class="f-ctrl" type="date" id="otDate2" value="2026-07-02">
     </div>
     <div class="f-group">
       <label class="f-label">予定残業時間</label>
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
-        <input class="f-ctrl" type="time" value="18:00">
+        <input class="f-ctrl" type="time" id="otStart2" value="18:00">
         <span style="color:var(--muted)">〜</span>
-        <input class="f-ctrl" type="time" value="20:00">
+        <input class="f-ctrl" type="time" id="otEnd2" value="20:00">
       </div>
     </div>
     <div class="f-group">
       <label class="f-label">残業理由</label>
-      <select class="f-ctrl"><option>業務上の必要</option><option>プロジェクト対応</option><option>繁忙期対応</option><option>その他</option></select>
+      <select class="f-ctrl" id="otReasonSel2"><option>業務上の必要</option><option>プロジェクト対応</option><option>繁忙期対応</option><option>その他</option></select>
     </div>
     <div class="f-group">
       <label class="f-label">詳細・備考</label>
-      <textarea class="f-ctrl" rows="2" placeholder="月次報告書の作成対応のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="otNote2" placeholder="月次報告書の作成対応のため"></textarea>
     </div>
-    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="otErr2" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitOvertimeReq()">申請する</button>
   </div>
 </div>
 
@@ -756,25 +760,26 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
   <div style="padding:0 16px">
     <div class="f-group">
       <label class="f-label">出勤日</label>
-      <input class="f-ctrl" type="date" value="2026-07-12">
+      <input class="f-ctrl" type="date" id="hwDate" value="2026-07-12">
     </div>
     <div class="f-group">
       <label class="f-label">勤務時間</label>
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center">
-        <input class="f-ctrl" type="time" value="09:00">
+        <input class="f-ctrl" type="time" id="hwStart" value="09:00">
         <span style="color:var(--muted)">〜</span>
-        <input class="f-ctrl" type="time" value="15:00">
+        <input class="f-ctrl" type="time" id="hwEnd" value="15:00">
       </div>
     </div>
     <div class="f-group">
       <label class="f-label">振替休日</label>
-      <input class="f-ctrl" type="date">
+      <input class="f-ctrl" type="date" id="hwFuriDate">
     </div>
     <div class="f-group">
       <label class="f-label">出勤理由</label>
-      <textarea class="f-ctrl" rows="2" placeholder="システムメンテナンス対応のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="hwReason" placeholder="システムメンテナンス対応のため"></textarea>
     </div>
-    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="hwErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitHolidayWork()">申請する</button>
   </div>
 </div>
 
@@ -783,21 +788,22 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
   <div style="padding:0 16px">
     <div class="f-group">
       <label class="f-label">欠勤日</label>
-      <input class="f-ctrl" type="date" value="2026-07-15">
+      <input class="f-ctrl" type="date" id="absDate" value="2026-07-15">
     </div>
     <div class="f-group">
       <label class="f-label">欠勤区分</label>
-      <select class="f-ctrl"><option>全日欠勤</option><option>午前欠勤</option><option>午後欠勤</option></select>
+      <select class="f-ctrl" id="absUnit"><option>全日欠勤</option><option>午前欠勤</option><option>午後欠勤</option></select>
     </div>
     <div class="f-group">
       <label class="f-label" data-i18n="form.reason">理由</label>
-      <select class="f-ctrl"><option>病気・体調不良</option><option>家族の看護</option><option>冠婚葬祭</option><option>その他</option></select>
+      <select class="f-ctrl" id="absReasonSel"><option>病気・体調不良</option><option>家族の看護</option><option>冠婚葬祭</option><option>その他</option></select>
     </div>
     <div class="f-group">
       <label class="f-label">詳細</label>
-      <textarea class="f-ctrl" rows="2" placeholder="発熱のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="absDetail" placeholder="発熱のため"></textarea>
     </div>
-    <button class="btn-app btn-dan" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="absErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-dan" onclick="submitAbsence()">申請する</button>
   </div>
 </div>
 
@@ -808,26 +814,27 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
       <label class="f-label">申請種別</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <label style="display:flex;align-items:center;gap:8px;padding:12px;border:2px solid var(--war);border-radius:13px;background:var(--war-l);cursor:pointer">
-          <input type="radio" name="letype" checked style="accent-color:var(--war)"><span style="font-weight:700;color:var(--war)">遅刻</span>
+          <input type="radio" name="letype" id="lateEarlyLate" checked style="accent-color:var(--war)"><span style="font-weight:700;color:var(--war)">遅刻</span>
         </label>
         <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:13px;cursor:pointer">
-          <input type="radio" name="letype"><span style="font-weight:700">早退</span>
+          <input type="radio" name="letype" id="lateEarlyEarly"><span style="font-weight:700">早退</span>
         </label>
       </div>
     </div>
     <div class="f-group">
       <label class="f-label">対象日</label>
-      <input class="f-ctrl" type="date" value="2026-07-03">
+      <input class="f-ctrl" type="date" id="lateEarlyDate" value="2026-07-03">
     </div>
     <div class="f-group">
       <label class="f-label">出勤（予定）時刻</label>
-      <input class="f-ctrl" type="time" value="10:30">
+      <input class="f-ctrl" type="time" id="lateEarlyTime" value="10:30">
     </div>
     <div class="f-group">
       <label class="f-label" data-i18n="form.reason">理由</label>
-      <textarea class="f-ctrl" rows="2" placeholder="電車遅延のため"></textarea>
+      <textarea class="f-ctrl" rows="2" id="lateEarlyReason" placeholder="電車遅延のため"></textarea>
     </div>
-    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="lateEarlyErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitLateEarly()">申請する</button>
   </div>
 </div>
 
@@ -835,21 +842,26 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
 <div class="pg" id="screen-apply-punch">
   <div style="padding:0 16px">
     <div class="card-app" style="background:var(--dan-l);border-color:#fca5a5">
-      <div style="font-size:13px;color:var(--dan);font-weight:700"><i class="bi bi-exclamation-triangle"></i> 退勤打刻なし — 6月25日（水）</div>
+      <div style="font-size:13px;color:var(--dan);font-weight:700"><i class="bi bi-exclamation-triangle"></i> 打刻の修正を申請します</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">対象日</label>
+      <input class="f-ctrl" type="date" id="pcDate" value="2026-06-25">
     </div>
     <div class="f-group">
       <label class="f-label">修正種別</label>
-      <select class="f-ctrl"><option>退勤打刻漏れ</option><option>出勤打刻漏れ</option><option>時刻修正</option></select>
+      <select class="f-ctrl" id="pcType"><option>退勤打刻漏れ</option><option>出勤打刻漏れ</option><option>時刻修正</option></select>
     </div>
     <div class="f-group">
-      <label class="f-label">正しい退勤時刻</label>
-      <input class="f-ctrl" type="time" value="18:10">
+      <label class="f-label">正しい時刻</label>
+      <input class="f-ctrl" type="time" id="pcTime" value="18:10">
     </div>
     <div class="f-group">
       <label class="f-label">修正理由</label>
-      <textarea class="f-ctrl" rows="2" placeholder="打刻を忘れて退社してしまいました">打刻を忘れて退社してしまいました。</textarea>
+      <textarea class="f-ctrl" rows="2" id="pcReason" placeholder="打刻を忘れて退社してしまいました">打刻を忘れて退社してしまいました。</textarea>
     </div>
-    <button class="btn-app btn-pri" onclick="showToast('申請しました');goScreen('screen-apply')">申請する</button>
+    <div id="pcErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitPunchCorrection()">申請する</button>
   </div>
 </div>
 
@@ -1458,6 +1470,23 @@ function goBack(){
   }
 }
 
+// 本日の打刻状況を再取得（打刻直後の画面更新用）
+async function loadTodayPunch(){
+  if(!sb || !_myAuthId) return;
+  var todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  try{
+    var {data} = await sb.from('punch_records').select('*')
+      .eq('user_id', _myAuthId)
+      .gte('punched_at', todayStart.toISOString())
+      .order('punched_at', {ascending:true});
+    var statusEl = document.querySelector('#screen-punch .clock-status');
+    if(statusEl && data && data.length){
+      var last = data[data.length-1];
+      statusEl.innerHTML = '<i class="bi bi-circle-fill" style="font-size:8px"></i> '+last.punch_type+'済（'+last.punched_at.slice(11,16)+'）';
+    }
+  }catch(e){ /* 表示更新に失敗しても打刻自体は完了しているので握りつぶす */ }
+}
+
 async function doPunch(type, jobType){
   if(!jobType) jobType = '本業';
   var label = jobType==='副業' ? '副業 '+type : type;
@@ -1506,6 +1535,192 @@ async function submitSideJobRequest(){
   var succ = document.getElementById('sjSuccess');
   if(succ) succ.style.display='';
   showToast('副業申請を送信しました');
+}
+
+// ── 有給休暇（全日）──
+async function submitLeaveFull(){
+  var unit = (document.getElementById('leaveFullUnit')||{}).value || '全日';
+  var start = (document.getElementById('leaveFullStart')||{}).value;
+  var end = (document.getElementById('leaveFullEnd')||{}).value;
+  var reason = (document.getElementById('leaveFullReason')||{}).value;
+  var errEl = document.getElementById('leaveFullErr');
+  if(errEl) errEl.style.display='none';
+  if(!start){ if(errEl){errEl.textContent='開始日を入力してください';errEl.style.display='';} return; }
+  var unitMap = {'全日':'full','午前半休':'half_am','午後半休':'half_pm','時間単位':'hour'};
+  var payload = {
+    user_id: _myAuthId,
+    leave_type: '年次有給休暇'+(unit!=='全日'?'（'+unit+'）':''),
+    start_date: start,
+    end_date: (unit==='全日'? (end||start) : start),
+    reason: reason||null,
+    status: 'pending',
+    unit: unitMap[unit]||'full'
+  };
+  var {error} = await sb.from('leave_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('休暇申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 有給休暇（半休）──
+async function submitLeaveHalf(){
+  var date = (document.getElementById('leaveHalfDate')||{}).value;
+  var isAm = (document.getElementById('leaveHalfAm')||{}).checked;
+  var reason = (document.getElementById('leaveHalfReason')||{}).value;
+  var errEl = document.getElementById('leaveHalfErr');
+  if(errEl) errEl.style.display='none';
+  if(!date){ if(errEl){errEl.textContent='取得日を入力してください';errEl.style.display='';} return; }
+  var payload = {
+    user_id: _myAuthId,
+    leave_type: '年次有給休暇（'+(isAm?'午前半休':'午後半休')+'）',
+    start_date: date, end_date: date,
+    reason: reason||null, status: 'pending',
+    unit: isAm?'half_am':'half_pm'
+  };
+  var {error} = await sb.from('leave_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('半休申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 有給休暇（時間単位）──
+async function submitLeaveHourly(){
+  var date = (document.getElementById('leaveHourDate')||{}).value;
+  var st = (document.getElementById('leaveHourStart')||{}).value;
+  var et = (document.getElementById('leaveHourEnd')||{}).value;
+  var reason = (document.getElementById('leaveHourReason')||{}).value;
+  var errEl = document.getElementById('leaveHourErr');
+  if(errEl) errEl.style.display='none';
+  if(!date||!st||!et){ if(errEl){errEl.textContent='取得日と時間帯を入力してください';errEl.style.display='';} return; }
+  var sh=parseInt(st.split(':')[0]), sm=parseInt(st.split(':')[1]);
+  var eh=parseInt(et.split(':')[0]), em=parseInt(et.split(':')[1]);
+  var hourCount = Math.max(0, ((eh*60+em)-(sh*60+sm))/60);
+  var payload = {
+    user_id: _myAuthId,
+    leave_type: '年次有給休暇（時間単位）',
+    start_date: date, end_date: date,
+    reason: reason||null, status: 'pending',
+    unit: 'hour', hour_count: hourCount,
+    start_time: st, end_time: et
+  };
+  var {error} = await sb.from('leave_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('時間単位休暇の申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 残業申請 ──
+async function submitOvertimeReq(){
+  var date = (document.getElementById('otDate2')||{}).value;
+  var st = (document.getElementById('otStart2')||{}).value;
+  var et = (document.getElementById('otEnd2')||{}).value;
+  var reasonSel = (document.getElementById('otReasonSel2')||{}).value;
+  var note = (document.getElementById('otNote2')||{}).value;
+  var errEl = document.getElementById('otErr2');
+  if(errEl) errEl.style.display='none';
+  if(!date||!st||!et){ if(errEl){errEl.textContent='残業日と時間を入力してください';errEl.style.display='';} return; }
+  var sh=parseInt(st.split(':')[0]), sm=parseInt(st.split(':')[1]);
+  var eh=parseInt(et.split(':')[0]), em=parseInt(et.split(':')[1]);
+  var hours = Math.max(0, ((eh*60+em)-(sh*60+sm))/60);
+  var reason = reasonSel + (note?'：'+note:'');
+  var payload = { user_id:_myAuthId, overtime_date:date, hours:hours, reason:reason, status:'pending' };
+  var {error} = await sb.from('overtime_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('残業申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 休日出勤申請（シフト申請として管理）──
+async function submitHolidayWork(){
+  var date = (document.getElementById('hwDate')||{}).value;
+  var st = (document.getElementById('hwStart')||{}).value;
+  var et = (document.getElementById('hwEnd')||{}).value;
+  var furi = (document.getElementById('hwFuriDate')||{}).value;
+  var reason = (document.getElementById('hwReason')||{}).value;
+  var errEl = document.getElementById('hwErr');
+  if(errEl) errEl.style.display='none';
+  if(!date){ if(errEl){errEl.textContent='出勤日を入力してください';errEl.style.display='';} return; }
+  if(!_myEmpId){ if(errEl){errEl.textContent='職員情報の取得に失敗しました';errEl.style.display='';} return; }
+  var reasonText = '【休日出勤】'+(reason||'')+(furi?'（振替休日:'+furi+'）':'');
+  var payload = {
+    employee_id: _myEmpId, request_date: date,
+    requested_start: st||null, requested_end: et||null,
+    reason: reasonText, status: 'pending'
+  };
+  var {error} = await sb.from('shift_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('休日出勤申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 欠勤申請（休暇申請として管理）──
+async function submitAbsence(){
+  var date = (document.getElementById('absDate')||{}).value;
+  var unit = (document.getElementById('absUnit')||{}).value;
+  var reasonSel = (document.getElementById('absReasonSel')||{}).value;
+  var detail = (document.getElementById('absDetail')||{}).value;
+  var errEl = document.getElementById('absErr');
+  if(errEl) errEl.style.display='none';
+  if(!date){ if(errEl){errEl.textContent='欠勤日を入力してください';errEl.style.display='';} return; }
+  var unitMap = {'全日欠勤':'full','午前欠勤':'half_am','午後欠勤':'half_pm'};
+  var payload = {
+    user_id: _myAuthId,
+    leave_type: '欠勤（'+unit+'）',
+    start_date: date, end_date: date,
+    reason: reasonSel+(detail?'：'+detail:''),
+    status: 'pending', unit: unitMap[unit]||'full'
+  };
+  var {error} = await sb.from('leave_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('欠勤申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 遅刻・早退申請（休暇申請として管理）──
+async function submitLateEarly(){
+  var isLate = (document.getElementById('lateEarlyLate')||{}).checked;
+  var date = (document.getElementById('lateEarlyDate')||{}).value;
+  var time = (document.getElementById('lateEarlyTime')||{}).value;
+  var reason = (document.getElementById('lateEarlyReason')||{}).value;
+  var errEl = document.getElementById('lateEarlyErr');
+  if(errEl) errEl.style.display='none';
+  if(!date||!time){ if(errEl){errEl.textContent='対象日と時刻を入力してください';errEl.style.display='';} return; }
+  var payload = {
+    user_id: _myAuthId,
+    leave_type: isLate?'遅刻':'早退',
+    start_date: date, end_date: date,
+    reason: reason||null, status: 'pending',
+    unit: 'hour',
+    start_time: isLate?time:null,
+    end_time: isLate?null:time
+  };
+  var {error} = await sb.from('leave_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast((isLate?'遅刻':'早退')+'申請を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 打刻修正申請（punch_recordsのnoteに詳細を記録し、index.html側の「打刻申請」承認一覧に表示）──
+async function submitPunchCorrection(){
+  var date = (document.getElementById('pcDate')||{}).value;
+  var type = (document.getElementById('pcType')||{}).value;
+  var time = (document.getElementById('pcTime')||{}).value;
+  var reason = (document.getElementById('pcReason')||{}).value;
+  var errEl = document.getElementById('pcErr');
+  if(errEl) errEl.style.display='none';
+  if(!date||!time){ if(errEl){errEl.textContent='対象日と時刻を入力してください';errEl.style.display='';} return; }
+  var punchType = type.indexOf('出勤')===0 ? '出勤' : '退勤';
+  var note = '打刻申請｜種別:'+type+'｜理由:'+(reason||'（未入力）');
+  var payload = {
+    user_id: _myAuthId,
+    punch_type: punchType,
+    punched_at: new Date(date+'T'+time+':00').toISOString(),
+    note: note
+  };
+  var {error} = await sb.from('punch_records').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('打刻修正を申請しました');
+  goScreen('screen-apply');
 }
 
 // Clock update
