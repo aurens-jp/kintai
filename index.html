@@ -25,6 +25,7 @@ body{font-family:'Segoe UI',Meiryo,sans-serif;background:var(--bg);color:var(--t
 .nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
 .nav-item.active{background:var(--blue);color:#fff}
 .nav-item .icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center;padding:0 5px}
 .sidebar-bottom{margin-top:auto;padding:12px}
 .sidebar-user{padding:10px 12px;background:rgba(255,255,255,.07);border-radius:8px;font-size:12px;color:rgba(255,255,255,.6)}
 .sidebar-user strong{display:block;color:#fff;font-size:13px}
@@ -228,7 +229,7 @@ tr:hover td{background:#fafafa}
   <div class="nav-item" onclick="nav('punch')"><span class="icon">👊</span>打刻</div>
   <div class="nav-item" onclick="nav('timecard')"><span class="icon">📋</span>タイムカード</div>
   <div class="nav-item" onclick="nav('attendance')"><span class="icon">👥</span>勤務実績一覧</div>
-  <div class="nav-item" onclick="nav('approval')"><span class="icon">✅</span>申請承認</div>
+  <div class="nav-item" onclick="nav('approval')" style="justify-content:space-between"><span><span class="icon">✅</span>申請承認</span><span id="navPendingBadge" class="nav-badge" style="display:none">0</span></div>
   <div class="sidebar-section">管理メニュー</div>
   <div class="nav-item" onclick="nav('shift')"><span class="icon">📅</span>シフト管理</div>
   <div class="nav-item" onclick="nav('leave')"><span class="icon">🌴</span>休暇管理</div>
@@ -304,6 +305,20 @@ tr:hover td{background:#fafafa}
 
     <!-- 左カラム -->
     <div class="dash-col">
+      <!-- 未承認申請（最重要のため左カラム先頭に表示） -->
+      <div class="card" style="border:1.5px solid var(--amber);background:linear-gradient(#fffbeb,#fff)">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>🔔 未承認申請 <span id="dashPendingCount" class="nav-badge" style="display:none;vertical-align:middle;margin-left:4px">0</span></span>
+          <a href="#" onclick="nav('approval');return false;" style="font-size:12px;color:var(--blue);font-weight:400;text-decoration:none">申請承認へ →</a>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>種類</th><th>申請者</th><th>内容</th><th>申請日</th><th>操作</th></tr></thead>
+            <tbody id="dashApprovalTbl"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- 本日の出退勤状況 -->
       <div class="card">
         <div class="card-title">📋 本日の出退勤状況</div>
@@ -348,20 +363,6 @@ tr:hover td{background:#fafafa}
 
     <!-- 右カラム -->
     <div class="dash-col">
-      <!-- 未承認申請 -->
-      <div class="card">
-        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-          🔔 未承認申請
-          <a href="#" onclick="nav('approval');return false;" style="font-size:12px;color:var(--blue);font-weight:400;text-decoration:none">申請承認へ →</a>
-        </div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr><th>種類</th><th>申請者</th><th>内容</th><th>申請日</th><th>操作</th></tr></thead>
-            <tbody id="dashApprovalTbl"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
       <!-- 法定取得未達アラート -->
       <div class="card">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
@@ -2819,6 +2820,7 @@ function loadProfile(){
     loadLeaveSettings();
     loadDashboard();
     loadPositions().then(loadAllUsers);
+    refreshPendingBadge();
   });
 }
 
@@ -2942,13 +2944,7 @@ function loadDashboard(){
   });
 
   // ── 未承認申請数
-  const kpiPend = document.getElementById('kpi-pending');
-  Promise.all([
-    sb.from('leave_requests').select('count',{count:'exact',head:true}).eq('status','pending').then(function(r){return r.error?0:(r.count||0);}),
-    sb.from('overtime_requests').select('count',{count:'exact',head:true}).eq('status','pending').then(function(r){return r.error?0:(r.count||0);})
-  ]).then(function(counts){
-    kpiPend.textContent = counts[0]+counts[1];
-  }).catch(function(){ kpiPend.textContent='—'; });
+  refreshPendingBadge();
 
   // ── 今月の残業（kpi-otは残存KPI枠のため維持、今回は非表示にしない）
   document.getElementById('kpi-alert').textContent='—';
@@ -3562,6 +3558,7 @@ window.actOnApproval = function(requestType, requestId, action, reloadFn){
         if(r.error){ showToast('処理失敗: '+r.error.message,'red'); return; }
         showToast(action==='approved'?'✅ 承認しました':'否認しました', action==='approved'?'green':'amber');
         reloadFn && reloadFn();
+        refreshPendingBadge();
       });
       return;
     }
@@ -3585,7 +3582,34 @@ window.actOnApproval = function(requestType, requestId, action, reloadFn){
       if(r.error){ showToast('処理失敗: '+r.error.message,'red'); return; }
       showToast(action==='approved'?'✅ 承認しました':'否認しました', action==='approved'?'green':'amber');
       reloadFn && reloadFn();
+      refreshPendingBadge();
     });
+  });
+};
+
+// 全申請種別の未承認件数を集計し、サイドバー・ダッシュボードに反映
+window.refreshPendingBadge = function(){
+  if(!sb) return;
+  var tables = ['leave_requests','overtime_requests','shift_requests','shift_swap_requests','shift_wish_requests','side_job_requests'];
+  Promise.all(
+    tables.map(function(t){
+      return sb.from(t).select('count',{count:'exact',head:true}).eq('status','pending').then(function(r){return r.error?0:(r.count||0);});
+    }).concat([
+      sb.from('punch_records').select('count',{count:'exact',head:true}).like('note','打刻申請%').then(function(r){return r.error?0:(r.count||0);})
+    ])
+  ).then(function(counts){
+    var total = counts.reduce(function(a,b){return a+b;},0);
+    var kpiPend = document.getElementById('kpi-pending');
+    if(kpiPend) kpiPend.textContent = total;
+    ['navPendingBadge','dashPendingCount'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      if(total>0){ el.textContent = total>99?'99+':total; el.style.display=''; }
+      else { el.style.display='none'; }
+    });
+  }).catch(function(){
+    var kpiPend = document.getElementById('kpi-pending');
+    if(kpiPend) kpiPend.textContent='—';
   });
 };
 
@@ -4139,6 +4163,7 @@ window.approvePunchCorrection = function(id){
     if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
     showToast('✅ 打刻修正を承認しました','green');
     loadPunchApprovals();
+    refreshPendingBadge();
   });
 };
 window.rejectPunchCorrection = function(id){
@@ -4147,6 +4172,7 @@ window.rejectPunchCorrection = function(id){
     if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
     showToast('却下しました','amber');
     loadPunchApprovals();
+    refreshPendingBadge();
   });
 };
 window.approveLeave = function(id){
