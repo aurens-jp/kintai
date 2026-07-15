@@ -75,6 +75,28 @@ body {
 .toolbar .btn-blue  { background: var(--blue);  border-color: var(--blue);  color: var(--white); }
 .toolbar .btn-black { background: var(--ink);   border-color: var(--white); color: var(--white); }
 #zoom-label { font-size: 12px; min-width: 42px; text-align: center; }
+.toolbar .disp-toggle { display:flex; align-items:center; gap:6px; font-size:11px; color:#ccc; border:1px dashed #777; padding:3px 10px; }
+.toolbar .disp-toggle .dt-label { color:#999; }
+.toolbar .disp-toggle label { display:flex; align-items:center; gap:3px; cursor:pointer; }
+.toolbar .disp-toggle input { accent-color: var(--yellow); }
+
+#summarybar { background:#1c1c1c; color:#eee; padding:8px 20px; font-size:11px; letter-spacing:.03em; display:flex; gap:14px; flex-wrap:wrap; border-bottom:3px solid var(--ink); position:sticky; top:70px; z-index:39; }
+#summarybar .sum-group { display:inline-flex; gap:10px; flex-wrap:wrap; align-items:center; }
+#summarybar b { color:#F2B705; font-weight:800; margin-right:1px; }
+#summarybar .sum-sep { color:#666; }
+
+.p-gender, .p-age { font-size:9px; font-weight:800; padding:1px 5px; border:2px solid var(--ink); white-space:nowrap; }
+.p-gender.male { background:#E8F0FE; color:#1D4FBB; }
+.p-gender.female { background:#FDE7EF; color:#E4002B; }
+.p-age { background:#f2f2f2; color:#555; }
+
+/* 部署DB */
+.dept-add-form { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding:8px; border:2px dashed var(--ink); margin-bottom:10px; }
+.dept-add-form input, .dept-add-form select { font-family:inherit; font-size:11px; padding:4px 6px; border:2px solid var(--ink); }
+.dept-add-form button { font-family:inherit; font-weight:800; font-size:11px; padding:5px 10px; background:var(--blue); color:#fff; border:2px solid var(--blue); cursor:pointer; }
+table.dept-table input, table.dept-table select { font-family:inherit; font-size:11px; padding:2px 4px; border:1px solid #ccc; width:100%; }
+table.dept-table td { vertical-align:middle; }
+table.dept-table .del-btn { background:var(--red); color:#fff; border:none; padding:3px 9px; cursor:pointer; font-weight:800; font-size:10px; }
 
 /* ---------- チャート（キャンバス全体が待機場所を兼ねる） ---------- */
 #stage { padding: 24px; overflow: auto; min-height: calc(100vh - 70px); }
@@ -302,6 +324,9 @@ body {
     border: 1px solid #000 !important; border-style: solid !important;
     font-weight: 700;
   }
+  .person .p-gender, .person .p-age {
+    background: #fff !important; color: #000 !important; border: 1px solid #000 !important;
+  }
   .person.overlap { border: none !important; box-shadow: none !important; }
   .overlap-flag { background: #000 !important; color: #fff !important; }
 }
@@ -317,15 +342,23 @@ body {
   </div>
   <div class="toolbar">
     <span class="hint-chip">枠の外の余白へドロップ ＝ 待機（好きな場所に置けます）／ 役職枠へドロップ ＝ 役職を自動付与</span>
+    <span class="disp-toggle"><span class="dt-label">表示:</span>
+      <label><input type="checkbox" id="dispName" checked onchange="setDisplay('name',this.checked)">氏名</label>
+      <label><input type="checkbox" id="dispGender" onchange="setDisplay('gender',this.checked)">性別</label>
+      <label><input type="checkbox" id="dispAge" onchange="setDisplay('age',this.checked)">年代</label>
+    </span>
     <span id="stats" class="stats"></span>
     <button id="btn-zoom-out" title="縮小">−</button>
     <span id="zoom-label">100%</span>
     <button id="btn-zoom-in" title="拡大">＋</button>
     <button id="btn-db" class="btn-black">人事DB</button>
+    <button id="btn-dept" class="btn-black">部署DB</button>
     <button id="btn-print" class="btn-blue">印刷</button>
     <button id="btn-reset" class="btn-red">初期データに戻す</button>
   </div>
 </header>
+
+<div id="summarybar" class="no-print"></div>
 
 <main id="stage">
   <div id="chart-title" class="print-only">
@@ -344,9 +377,11 @@ body {
   <div class="db-tabs">
     <button class="db-tab active" data-tab="master">職員マスタ</button>
     <button class="db-tab" data-tab="log">異動履歴</button>
+    <button class="db-tab" data-tab="dept">部署マスタ</button>
   </div>
   <div id="db-master" class="db-body"></div>
   <div id="db-log" class="db-body" hidden></div>
+  <div id="db-dept" class="db-body" hidden></div>
 </section>
 
 <div id="toast" class="no-print" hidden></div>
@@ -580,13 +615,33 @@ function nowStr() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+/* ---------- 性別・年代（デモ用に決定論的に自動生成。実データではない） ---------- */
+function pseudoRand(seed) {
+  const x = Math.sin(seed * 999331 + 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+const AGE_BASE = {
+  "組合長": 60, "副組合長": 57, "参事": 55, "部長": 52, "課長": 47,
+  "課長補佐": 45, "係長": 40, "主任": 36, "係": 30, "一般職": 26, "嘱託": 62, "新規採用": 22,
+};
+function genderFor(id) { return pseudoRand(id) < 0.55 ? "男" : "女"; }
+function ageFor(id, title) {
+  const base = AGE_BASE[title] ?? 35;
+  const spread = Math.floor(pseudoRand(id * 7 + 3) * 15) - 7;
+  return Math.max(20, Math.min(65, base + spread));
+}
+function ageGroup(age) { return Math.floor(age / 10) * 10 + "代"; }
+const KIND_LABEL = { top: "統括", bu: "部", ka: "課", kakari: "係" };
+
 function seedDb() {
   const ts = nowStr();
   return {
     logSeq: 0,
+    units: UNITS.map((u) => ({ ...u, capacity: null })),
     employees: SEED.map((e, i) => ({
       id: i + 1, name: e[0], title: e[1], unit_id: e[2],
       pos_x: e[3] ?? null, pos_y: e[4] ?? null, updated_at: ts,
+      gender: genderFor(i + 1), age: ageFor(i + 1, e[1]),
     })),
     log: [],
   };
@@ -595,7 +650,17 @@ function seedDb() {
 function loadDb() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.units) parsed.units = UNITS.map((u) => ({ ...u, capacity: null }));
+      if (Array.isArray(parsed.employees)) {
+        parsed.employees.forEach((e) => {
+          if (e.gender == null) e.gender = genderFor(e.id);
+          if (e.age == null) e.age = ageFor(e.id, e.title);
+        });
+      }
+      return parsed;
+    }
   } catch (_) { /* localStorage 不可の環境ではメモリ内のみで動作 */ }
   return seedDb();
 }
@@ -606,14 +671,15 @@ function saveDb() {
 
 let db = loadDb();
 
-function unitPaths() {
+function unitPaths(units) {
   const byIdMap = {};
-  UNITS.forEach((u) => { byIdMap[u.id] = u; });
+  units.forEach((u) => { byIdMap[u.id] = u; });
   const paths = {};
-  UNITS.forEach((u) => {
+  units.forEach((u) => {
     const parts = [];
     let cur = u;
-    while (cur) {
+    let guard = 0;
+    while (cur && guard++ < 50) {
       if (cur.kind !== "top") parts.unshift(cur.name);
       cur = cur.parent_id != null ? byIdMap[cur.parent_id] : null;
     }
@@ -621,9 +687,18 @@ function unitPaths() {
   });
   return paths;
 }
-const UNIT_PATHS = unitPaths();
 
-const state = { units: UNITS, employees: [], log: [], zoom: 1, lastMovedId: null };
+function isDescendant(candidateId, ofId) {
+  let cur = db.units.find((u) => u.id === candidateId);
+  let guard = 0;
+  while (cur && cur.parent_id != null && guard++ < 50) {
+    if (cur.parent_id === ofId) return true;
+    cur = db.units.find((u) => u.id === cur.parent_id);
+  }
+  return false;
+}
+
+const state = { units: [], unitPaths: {}, employees: [], log: [], zoom: 1, lastMovedId: null, display: { name: true, gender: false, age: false } };
 let dragCtx = { id: null, dx: 12, dy: 12 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -631,17 +706,19 @@ const byId = (id) => state.employees.find((e) => e.id === id);
 const bySort = (a, b) => a.sort - b.sort || a.id - b.id;
 
 function fetchOrg() {
+  state.units = db.units;
+  state.unitPaths = unitPaths(db.units);
   state.employees = db.employees.map((e) => ({
     ...e,
-    unit_path: e.unit_id != null ? UNIT_PATHS[e.unit_id] : "（待機場所）",
+    unit_path: e.unit_id != null ? state.unitPaths[e.unit_id] : "（待機場所）",
   }));
   const nameOf = {};
   db.employees.forEach((e) => { nameOf[e.id] = e.name; });
   state.log = db.log.slice(-50).reverse().map((l) => ({
     ...l,
     employee_name: nameOf[l.employee_id],
-    from_path: l.from_unit_id != null ? UNIT_PATHS[l.from_unit_id] : "（待機場所）",
-    to_path: l.to_unit_id != null ? UNIT_PATHS[l.to_unit_id] : "（待機場所）",
+    from_path: l.from_unit_id != null ? state.unitPaths[l.from_unit_id] : "（待機場所）",
+    to_path: l.to_unit_id != null ? state.unitPaths[l.to_unit_id] : "（待機場所）",
   }));
 }
 
@@ -705,10 +782,25 @@ function personCard(emp, overlap) {
   const title = document.createElement("span");
   title.className = "p-title " + (TITLE_CLASS[emp.title] || "t-kakari");
   title.textContent = emp.title;
-  const name = document.createElement("span");
-  name.className = "p-name";
-  name.textContent = emp.name;
-  el.append(title, name);
+  el.append(title);
+  if (state.display.name) {
+    const name = document.createElement("span");
+    name.className = "p-name";
+    name.textContent = emp.name;
+    el.append(name);
+  }
+  if (state.display.gender && emp.gender) {
+    const g = document.createElement("span");
+    g.className = "p-gender " + (emp.gender === "男" ? "male" : "female");
+    g.textContent = emp.gender;
+    el.append(g);
+  }
+  if (state.display.age && emp.age != null) {
+    const a = document.createElement("span");
+    a.className = "p-age";
+    a.textContent = ageGroup(emp.age);
+    el.append(a);
+  }
   if (overlap) {
     const flag = document.createElement("span");
     flag.className = "overlap-flag";
@@ -865,11 +957,42 @@ function render() {
   });
 
   $("#stats").textContent = `配置 ${state.employees.length - waiting.length}名 ／ 待機 ${waiting.length}名`;
+  renderSummary();
   renderDb();
+}
+
+/* ---------- 最上部サマリー（役職別・性別・年代別 人数） ---------- */
+function renderSummary() {
+  const bar = $("#summarybar");
+  if (!bar) return;
+  const emps = state.employees;
+
+  const byTitle = {};
+  emps.forEach((e) => { byTitle[e.title] = (byTitle[e.title] || 0) + 1; });
+  const titleOrder = Object.keys(TITLE_RANK).sort((a, b) => TITLE_RANK[a] - TITLE_RANK[b]);
+  const titleHtml = titleOrder.filter((t) => byTitle[t])
+    .map((t) => `<b>${esc(t)}</b>${byTitle[t]}名`).join(" ");
+
+  const byGender = { "男": 0, "女": 0 };
+  emps.forEach((e) => { if (e.gender) byGender[e.gender] = (byGender[e.gender] || 0) + 1; });
+  const genderHtml = `<b>男</b>${byGender["男"]}名 <b>女</b>${byGender["女"]}名`;
+
+  const byAge = {};
+  emps.forEach((e) => { if (e.age != null) { const g = ageGroup(e.age); byAge[g] = (byAge[g] || 0) + 1; } });
+  const ageOrder = Object.keys(byAge).sort();
+  const ageHtml = ageOrder.map((g) => `<b>${esc(g)}</b>${byAge[g]}名`).join(" ") || '<span style="color:#777">（年代表示なし）</span>';
+
+  bar.innerHTML =
+    `<span class="sum-group">${titleHtml}</span>` +
+    `<span class="sum-sep">｜</span>` +
+    `<span class="sum-group">${genderHtml}</span>` +
+    `<span class="sum-sep">｜</span>` +
+    `<span class="sum-group">${ageHtml}</span>`;
 }
 
 /* ---------- 人事DBビューア ---------- */
 function renderDb() {
+  renderDeptDb();
   const master = $("#db-master");
   const rows = state.employees
     .slice()
@@ -903,6 +1026,127 @@ function renderDb() {
 function esc(s) {
   return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
+
+/* ---------- 部署DB（組織マスタの追加・編集・削除） ---------- */
+function renderDeptDb() {
+  const wrap = $("#db-dept");
+  if (!wrap) return;
+  const counts = buildCounts();
+  const parentOptions = (excludeId) => state.units
+    .filter((u) => u.id !== excludeId)
+    .slice()
+    .sort((a, b) => a.id - b.id)
+    .map((u) => `<option value="${u.id}">${esc(state.unitPaths[u.id] || u.name)}</option>`)
+    .join("");
+
+  const rows = state.units.slice().sort((a, b) => a.id - b.id).map((u) => {
+    const actual = counts[u.id] || 0;
+    const cap = u.capacity != null ? u.capacity : "";
+    const kindSel = Object.keys(KIND_LABEL).filter((k) => k !== "top").map((k) =>
+      `<option value="${k}"${k === u.kind ? " selected" : ""}>${KIND_LABEL[k]}</option>`).join("");
+    const kindCell = u.kind === "top"
+      ? `<span style="color:#999">${KIND_LABEL.top}</span>`
+      : `<select onchange="updateUnitField(${u.id},'kind',this.value)">${kindSel}</select>`;
+    const parentCell = u.parent_id == null
+      ? '<span style="color:#999">（最上位）</span>'
+      : `<select onchange="updateUnitField(${u.id},'parent_id',this.value)">${parentOptions(u.id)}</select>`;
+    return `<tr>
+      <td>${u.id}</td>
+      <td><input value="${esc(u.name)}" onchange="updateUnitField(${u.id},'name',this.value)"></td>
+      <td>${kindCell}</td>
+      <td>${parentCell}</td>
+      <td style="text-align:center">${actual}名</td>
+      <td><input type="number" min="0" value="${cap}" placeholder="—" style="width:60px" onchange="updateUnitField(${u.id},'capacity',this.value)"></td>
+      <td><button class="del-btn" onclick="deleteUnit(${u.id})">削除</button></td>
+    </tr>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div class="dept-add-form">
+      <input id="deptNewName" placeholder="部署名" style="width:130px">
+      <select id="deptNewKind">
+        <option value="bu">部</option>
+        <option value="ka">課</option>
+        <option value="kakari" selected>係</option>
+      </select>
+      <select id="deptNewParent">${parentOptions(null)}</select>
+      <button onclick="addUnitFromForm()">＋ 部署を追加</button>
+    </div>
+    <table class="dept-table">
+      <thead><tr><th>ID</th><th>部署名</th><th>種別</th><th>親部署</th><th>実人数</th><th>定員</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function nextUnitId() {
+  return state.units.reduce((m, u) => Math.max(m, u.id), 0) + 1;
+}
+
+window.addUnitFromForm = function () {
+  const nameEl = $("#deptNewName");
+  const kindEl = $("#deptNewKind");
+  const parentEl = $("#deptNewParent");
+  if (!nameEl) return;
+  const name = (nameEl.value || "").trim();
+  if (!name) { toast("部署名を入力してください"); return; }
+  const kind = kindEl.value;
+  const parentId = parentEl.value ? Number(parentEl.value) : null;
+  addUnit(name, kind, parentId);
+  nameEl.value = "";
+};
+
+window.addUnit = function (name, kind, parentId) {
+  const siblings = db.units.filter((u) => u.parent_id === parentId);
+  const sort = siblings.reduce((m, u) => Math.max(m, u.sort || 0), 0) + 1;
+  db.units.push({ id: nextUnitId(), name, kind, parent_id: parentId, sort, capacity: null });
+  saveDb();
+  fetchOrg();
+  render();
+  toast(`「${name}」を追加しました`);
+};
+
+window.updateUnitField = function (id, field, value) {
+  const u = db.units.find((x) => x.id === id);
+  if (!u) return;
+  if (field === "parent_id") {
+    const pid = value === "" ? null : Number(value);
+    if (pid != null && (pid === id || isDescendant(pid, id))) {
+      toast("配下の部署を親には設定できません");
+      render();
+      return;
+    }
+    u.parent_id = pid;
+  } else if (field === "capacity") {
+    u.capacity = value === "" ? null : Math.max(0, Number(value));
+  } else if (field === "kind") {
+    u.kind = value;
+  } else if (field === "name") {
+    const name = value.trim();
+    if (!name) { toast("部署名を空にはできません"); render(); return; }
+    u.name = name;
+  }
+  saveDb();
+  fetchOrg();
+  render();
+};
+
+window.deleteUnit = function (id) {
+  const hasChildren = db.units.some((u) => u.parent_id === id);
+  const hasEmployees = db.employees.some((e) => e.unit_id === id);
+  if (hasChildren) { toast("配下に部署があるため削除できません"); return; }
+  if (hasEmployees) { toast("所属職員がいるため削除できません（先に異動してください）"); return; }
+  if (!confirm("この部署を削除しますか？")) return;
+  db.units = db.units.filter((u) => u.id !== id);
+  saveDb();
+  fetchOrg();
+  render();
+  toast("削除しました");
+};
+
+window.setDisplay = function (key, val) {
+  state.display[key] = val;
+  render();
+};
 
 /* ---------- 異動処理（D&D → ブラウザ内DB 更新） ---------- */
 async function moveEmployee(empId, toUnitId, opts = {}) {
@@ -973,6 +1217,11 @@ function initUi() {
     window.print();
   });
   $("#btn-db").addEventListener("click", () => $("#dbpanel").classList.toggle("open"));
+  $("#btn-dept").addEventListener("click", () => {
+    $("#dbpanel").classList.add("open");
+    const tab = document.querySelector('.db-tab[data-tab="dept"]');
+    if (tab) tab.click();
+  });
   $("#btn-db-close").addEventListener("click", () => $("#dbpanel").classList.remove("open"));
   document.querySelectorAll(".db-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -980,6 +1229,8 @@ function initUi() {
       tab.classList.add("active");
       $("#db-master").hidden = tab.dataset.tab !== "master";
       $("#db-log").hidden = tab.dataset.tab !== "log";
+      $("#db-dept").hidden = tab.dataset.tab !== "dept";
+      if (tab.dataset.tab === "dept") renderDeptDb();
     });
   });
   $("#btn-reset").addEventListener("click", () => {
@@ -1010,7 +1261,7 @@ function initUi() {
 }
 
 // テスト・デバッグ用に公開
-window.app = { state, moveEmployee, fetchOrg, render };
+window.app = { state, moveEmployee, fetchOrg, render, addUnit, updateUnitField, deleteUnit, renderSummary };
 
 initUi();
 fetchOrg();
