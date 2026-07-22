@@ -2493,7 +2493,12 @@ var _i18n = {
     'notice.attach_photo':'📷 写真添付（任意）','notice.submit_btn':'📢 投稿する',
     'profile.name':'氏名','profile.dept':'部署','profile.emp_no':'社員番号',
     'profile.emp_type':'雇用形態','profile.hire_date':'入社日','profile.edit':'プロフィール編集',
-    'notif.notice':'お知らせ通知','notif.shift':'シフト通知','notif.apply_result':'申請結果通知','notif.punch_reminder':'打刻リマインダー'
+    'notif.notice':'お知らせ通知','notif.shift':'シフト通知','notif.apply_result':'申請結果通知','notif.punch_reminder':'打刻リマインダー',
+    'common.back':'戻る','home.apply_status':'申請状況',
+    'login.title':'勤怠管理','login.sub':'スタッフポータル','login.pw':'パスワード','login.forgot':'パスワードを忘れた方はこちら',
+    'menu.timecard':'勤務実績','menu.approval':'承認状況','menu.leave':'有給管理','menu.skill':'資格・スキル','menu.notif':'通知設定','menu.logout':'ログアウト',
+    'nav.notice':'お知らせ','nav.menu':'メニュー',
+    'settings.pw':'パスワード変更','settings.dark':'ダークモード','settings.bio':'バイオメトリクス認証','settings.ver':'バージョン 1.0.0'
   },
   en:{
     'login.email':'Email','login.password':'Password','login.btn':'Login',
@@ -2526,7 +2531,12 @@ var _i18n = {
     'notice.attach_photo':'📷 Attach Photo (optional)','notice.submit_btn':'📢 Post',
     'profile.name':'Name','profile.dept':'Dept','profile.emp_no':'Employee No',
     'profile.emp_type':'Type','profile.hire_date':'Hire Date','profile.edit':'Edit Profile',
-    'notif.notice':'Notices','notif.shift':'Shift','notif.apply_result':'Request Result','notif.punch_reminder':'Punch Reminder'
+    'notif.notice':'Notices','notif.shift':'Shift','notif.apply_result':'Request Result','notif.punch_reminder':'Punch Reminder',
+    'common.back':'Back','home.apply_status':'Requests',
+    'login.title':'Attendance','login.sub':'Staff Portal','login.pw':'Password','login.forgot':'Forgot password?',
+    'menu.timecard':'Work Record','menu.approval':'Approval Status','menu.leave':'Paid Leave','menu.skill':'Qualifications','menu.notif':'Notifications','menu.logout':'Logout',
+    'nav.notice':'Notices','nav.menu':'Menu',
+    'settings.pw':'Change Password','settings.dark':'Dark Mode','settings.bio':'Biometric Login','settings.ver':'Version 1.0.0'
   },
   vi:{
     'login.email':'Email','login.password':'Mật khẩu','login.btn':'Đăng nhập',
@@ -2559,7 +2569,12 @@ var _i18n = {
     'notice.attach_photo':'📷 Đính ảnh (tùy chọn)','notice.submit_btn':'📢 Đăng',
     'profile.name':'Họ tên','profile.dept':'Phòng ban','profile.emp_no':'Mã NV',
     'profile.emp_type':'Loại HĐ','profile.hire_date':'Ngày vào','profile.edit':'Chỉnh hồ sơ',
-    'notif.notice':'Thông báo','notif.shift':'Ca làm','notif.apply_result':'Kết quả đơn','notif.punch_reminder':'Nhắc chấm'
+    'notif.notice':'Thông báo','notif.shift':'Ca làm','notif.apply_result':'Kết quả đơn','notif.punch_reminder':'Nhắc chấm',
+    'common.back':'Quay lại','home.apply_status':'Trạng thái đơn',
+    'login.title':'Chấm công','login.sub':'Cổng nhân viên','login.pw':'Mật khẩu','login.forgot':'Quên mật khẩu?',
+    'menu.timecard':'Kết quả làm việc','menu.approval':'Trạng thái duyệt','menu.leave':'Quản lý nghỉ phép','menu.skill':'Kỹ năng/Chứng chỉ','menu.notif':'Cài đặt thông báo','menu.logout':'Đăng xuất',
+    'nav.notice':'Thông báo','nav.menu':'Menu',
+    'settings.pw':'Đổi mật khẩu','settings.dark':'Chế độ tối','settings.bio':'Xác thực sinh trắc học','settings.ver':'Phiên bản 1.0.0'
   },
   zh:{
     'login.email':'邮箱','login.pw':'密码','login.btn':'登录','login.forgot':'忘记密码',
@@ -2591,7 +2606,12 @@ var _i18n = {
     'notice.attach_photo':'📷 附加照片（选填）','notice.submit_btn':'📢 发布',
     'profile.name':'姓名','profile.dept':'部门','profile.emp_no':'员工编号',
     'profile.emp_type':'雇用形式','profile.hire_date':'入职日期','profile.edit':'编辑资料',
-    'notif.notice':'通知提醒','notif.shift':'班次通知','notif.apply_result':'申请结果','notif.punch_reminder':'打卡提醒'
+    'notif.notice':'通知提醒','notif.shift':'班次通知','notif.apply_result':'申请结果','notif.punch_reminder':'打卡提醒',
+    'common.back':'返回','home.apply_status':'申请状态',
+    'login.title':'考勤管理','login.sub':'员工门户',
+    'menu.timecard':'工作记录','menu.approval':'审批状态','menu.leave':'年假管理','menu.skill':'资格证书','menu.notif':'通知设置','menu.logout':'退出登录',
+    'nav.notice':'通知','nav.menu':'菜单',
+    'settings.pw':'修改密码','settings.dark':'深色模式','settings.bio':'生物识别认证','settings.ver':'版本 1.0.0'
   }
 };
 
@@ -2599,13 +2619,40 @@ var _lang = (function(){
   try{ return localStorage.getItem('staff_lang')||'ja'; }catch(e){ return 'ja'; }
 })();
 
-function t(key){ return (_i18n[_lang]&&_i18n[_lang][key])||_i18n.ja[key]||key; }
+function t(key){
+  if(_i18n[_lang] && _i18n[_lang][key]!==undefined) return _i18n[_lang][key];
+  if(_i18n.ja[key]!==undefined) return _i18n.ja[key];
+  return null; // 未定義キーは元のHTML表示を維持（キー文字列をそのまま表示しない）
+}
 
 function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(function(el){
     var key = el.getAttribute('data-i18n');
     var val = t(key);
     if(val) el.textContent = val;
+  });
+}
+
+function setLang(lang){
+  _lang = lang;
+  try{ localStorage.setItem('staff_lang', lang); }catch(e){}
+  applyI18n();
+  updateLangButtons();
+}
+
+function updateLangButtons(){
+  ['ja','en','vi','zh'].forEach(function(l){
+    var btn = document.getElementById('langBtn-'+l);
+    if(!btn) return;
+    if(l===_lang){
+      btn.style.border='2px solid var(--pri)';
+      btn.style.background='var(--pri-l)';
+      btn.style.color='var(--pri)';
+    }else{
+      btn.style.border='2px solid var(--border)';
+      btn.style.background='#fff';
+      btn.style.color='var(--text)';
+    }
   });
 }
 
@@ -2622,6 +2669,7 @@ function checkSideJobFeature(){
 document.addEventListener('DOMContentLoaded', function(){
   restoreLoginCredentials();
   applyI18n();
+  updateLangButtons();
   updateClock();
   checkSideJobFeature();
 });
