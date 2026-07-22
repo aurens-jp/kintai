@@ -32,14 +32,14 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:
 #floatBack i{font-size:18px}
 
 /* ── Top Nav ── */
-.bnav{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nh);background:#fff;border-bottom:1px solid var(--border);display:flex;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;font-size:10px;color:var(--muted);cursor:pointer;padding:6px 0;position:relative;transition:color .15s}
+.bnav{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nh);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:stretch;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;box-sizing:border-box}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;font-size:10px;color:var(--muted);cursor:pointer;padding:6px 0;position:relative;transition:color .15s;box-sizing:border-box;max-height:100%;overflow:hidden}
 .bnav-btn i{font-size:22px;line-height:1}
 .bnav-btn.on{color:var(--pri)}
 .bnav-dot{position:absolute;top:6px;right:calc(50% - 14px);width:8px;height:8px;background:var(--dan);border-radius:50%;border:2px solid #fff}
 
 /* ── Page ── */
-.pg{display:none;padding-top:calc(var(--nh)+20px);padding-bottom:16px;min-height:100vh}
+.pg{display:none;padding-top:calc(var(--nh) + 24px);padding-bottom:16px;min-height:100vh;box-sizing:border-box}
 .pg.on{display:block}
 .pg.no-hdr{padding-top:calc(var(--nh))}
 .pg.no-nav{padding-top:16px;padding-bottom:16px}
