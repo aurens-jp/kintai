@@ -609,12 +609,24 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
 
 <!-- ⑪ 申請一覧 -->
 <div class="pg" id="screen-apply">
+  <div class="sec-title">申請する</div>
+  <div style="padding:0 16px 8px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-punch')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px">
+      <i class="bi bi-pen" style="font-size:20px"></i><span style="font-size:13px">打刻申請</span>
+    </button>
+    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-comp-holiday')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px">
+      <i class="bi bi-calendar2-week" style="font-size:20px"></i><span style="font-size:13px">休日申請</span>
+    </button>
+    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-hr')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px">
+      <i class="bi bi-person-vcard" style="font-size:20px"></i><span style="font-size:13px">人事申請</span>
+    </button>
+    <button class="btn-app btn-gray" onclick="goScreen('screen-apply-new')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px">
+      <i class="bi bi-plus-circle" style="font-size:20px"></i><span style="font-size:13px" data-i18n="apply.new">その他の申請</span>
+    </button>
+  </div>
   <div class="sec-title" data-i18n="apply.history_title">シフト申請・交換履歴</div>
   <div class="list-wrap" id="myShiftRequestList">
     <div class="list-row"><div class="list-sub" style="padding:4px 0;color:var(--muted)">読み込み中...</div></div>
-  </div>
-  <div style="padding:8px 16px">
-    <button class="btn-app btn-pri" onclick="goScreen('screen-apply-new')"><i class="bi bi-plus-circle"></i> <span data-i18n="apply.new">新規申請</span></button>
   </div>
 </div>
 
@@ -627,16 +639,6 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
     <div class="list-row" onclick="goScreen('screen-apply-hourly-leave')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-clock" style="color:var(--suc)"></i></div><div class="list-title" data-i18n="apply_type.hourly_leave">時間単位休暇</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
     <div class="list-row" onclick="goScreen('screen-apply-absence')"><div class="list-icon" style="background:var(--dan-l)"><i class="bi bi-calendar-x" style="color:var(--dan)"></i></div><div class="list-title" data-i18n="apply_type.absence">欠勤申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
     <div class="list-row" onclick="goScreen('screen-apply-late-early')"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-alarm" style="color:var(--war)"></i></div><div class="list-title" data-i18n="apply_type.late_early">遅刻・早退申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-    <div class="list-row" onclick="goScreen('screen-apply-comp-holiday')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-calendar2-week" style="color:var(--suc)"></i></div><div class="list-title">休日申請（振替休日）</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-  </div>
-  <div class="sec-title">人事申請</div>
-  <div class="list-wrap">
-    <div class="list-row" onclick="openHrForm('住所変更')"><div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-house" style="color:var(--pri)"></i></div><div class="list-title">住所変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-    <div class="list-row" onclick="openHrForm('扶養家族変更')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-people" style="color:var(--pur)"></i></div><div class="list-title">扶養家族変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-    <div class="list-row" onclick="openHrForm('氏名変更')"><div class="list-icon" style="background:#fef3c7"><i class="bi bi-person-badge" style="color:var(--war)"></i></div><div class="list-title">氏名変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-    <div class="list-row" onclick="openHrForm('緊急連絡先変更')"><div class="list-icon" style="background:var(--dan-l)"><i class="bi bi-telephone" style="color:var(--dan)"></i></div><div class="list-title">緊急連絡先変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-    <div class="list-row" onclick="openHrForm('銀行口座変更')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-bank" style="color:var(--suc)"></i></div><div class="list-title">銀行口座変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
-    <div class="list-row" onclick="openHrForm('その他')"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-three-dots" style="color:var(--muted)"></i></div><div class="list-title">その他</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
   </div>
   <div class="sec-title" data-i18n="apply_cat.other">その他申請</div>
   <div class="list-wrap">
@@ -895,6 +897,19 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
     <div id="chErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
     <button class="btn-app btn-pri" onclick="submitCompHoliday()">申請する</button>
+  </div>
+</div>
+
+<!-- 人事申請メニュー -->
+<div class="pg" id="screen-apply-hr">
+  <div class="sec-title">人事申請の種類を選択</div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="openHrForm('住所変更')"><div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-house" style="color:var(--pri)"></i></div><div class="list-title">住所変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('扶養家族変更')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-people" style="color:var(--pur)"></i></div><div class="list-title">扶養家族変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('氏名変更')"><div class="list-icon" style="background:#fef3c7"><i class="bi bi-person-badge" style="color:var(--war)"></i></div><div class="list-title">氏名変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('緊急連絡先変更')"><div class="list-icon" style="background:var(--dan-l)"><i class="bi bi-telephone" style="color:var(--dan)"></i></div><div class="list-title">緊急連絡先変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('銀行口座変更')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-bank" style="color:var(--suc)"></i></div><div class="list-title">銀行口座変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('その他')"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-three-dots" style="color:var(--muted)"></i></div><div class="list-title">その他</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
   </div>
 </div>
 
@@ -1535,7 +1550,7 @@ var _titles = {
   'screen-apply-hourly-leave':'時間単位休暇申請','screen-apply-ot':'残業申請',
   'screen-apply-holiday-work':'休日出勤申請','screen-apply-absence':'欠勤申請',
   'screen-apply-late-early':'遅刻・早退申請','screen-apply-punch':'打刻修正申請',
-  'screen-apply-comp-holiday':'休日申請（振替休日）','screen-apply-hr-form':'人事申請',
+  'screen-apply-comp-holiday':'休日申請（振替休日）','screen-apply-hr':'人事申請','screen-apply-hr-form':'人事申請',
   'screen-apply-shift-wish':'シフト・休暇希望申請','screen-apply-shift-change':'シフト変更申請','screen-apply-shift-swap':'シフト交換申請','screen-apply-detail':'申請詳細',
   'screen-approval-status':'承認状況',
   'screen-notice':'お知らせ','screen-notice-detail':'お知らせ詳細','screen-notice-post':'お知らせ投稿',
