@@ -486,6 +486,7 @@ tr:hover td{background:#fafafa}
     <div class="tab active" onclick="switchTab(this,'tab-leave-app')">休暇申請</div>
     <div class="tab" onclick="switchTab(this,'tab-ot-app')">残業申請</div>
     <div class="tab" onclick="switchTab(this,'tab-punch-app')">打刻申請</div>
+    <div class="tab" onclick="switchTab(this,'tab-hr-app')">👤 人事申請</div>
     <div class="tab" onclick="switchTab(this,'tab-shift-app');loadShiftApprovals()">📋 シフト申請</div>
     <div class="tab" id="tab-sidejob-nav" onclick="switchTab(this,'tab-sidejob-app');loadSideJobApprovals()">💼 副業申請</div>
     <div class="tab" onclick="switchTab(this,'tab-workflow-cfg');loadWorkflowConfig()">⚙️ ワークフロー設定</div>
@@ -506,6 +507,16 @@ tr:hover td{background:#fafafa}
     <div class="card">
       <table><thead><tr><th>申請者</th><th>日付</th><th>種別</th><th>時刻</th><th>備考</th><th>操作</th></tr></thead>
       <tbody id="punchAppTbl"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-hr-app">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin:0">👤 人事申請一覧（未承認）</div>
+        <button class="btn btn-outline btn-sm" onclick="loadHrApprovals()">🔄 更新</button>
+      </div>
+      <table><thead><tr><th>申請者</th><th>種別</th><th>内容</th><th>理由</th><th>申請日</th><th>操作</th></tr></thead>
+      <tbody id="hrAppTbl"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">読み込み中...</td></tr></tbody></table>
     </div>
   </div>
   <div class="tab-content" id="tab-shift-app">
@@ -3062,10 +3073,11 @@ function loadDashboard(){
   // ── ダッシュボードお知らせ
   loadDashNotices();
 
-  // ── 未承認申請リスト（FK不要：employees別取得してマージ）
+  // ── 未承認申請リスト（FK不要：employees別取得してマージ、休暇＋人事申請）
   Promise.all([
     sb.from('leave_requests').select('id,user_id,leave_type,start_date,end_date,status,created_at').eq('status','pending').limit(10),
-    sb.from('employees').select('auth_id,name').eq('is_active',true)
+    sb.from('employees').select('auth_id,name').eq('is_active',true),
+    sb.from('hr_requests').select('id,user_id,request_type,details,status,created_at').eq('status','pending').limit(10)
   ]).then(function(rs){
     const tbody=document.getElementById('dashApprovalTbl');
     if(rs[0].error){
@@ -3074,14 +3086,18 @@ function loadDashboard(){
     }
     const empMap={};
     (rs[1].data||[]).forEach(function(e){ empMap[e.auth_id]=e.name; });
-    if(!rs[0].data||!rs[0].data.length){
+    const leaveRows=(rs[0].data||[]).map(function(req){
+      return {created_at:req.created_at, html:'<tr><td><span class="badge badge-blue">休暇</span></td><td>'+(empMap[req.user_id]||'—')+'</td><td>'+req.leave_type+' '+req.start_date+'〜'+req.end_date+'</td><td>'+req.created_at.slice(0,10)+'</td><td><button class="btn btn-sm btn-green" onclick="approveLeave(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectLeave(&quot;'+req.id+'&quot;)">否認</button></td></tr>'};
+    });
+    const hrRows=(rs[2].error?[]:(rs[2].data||[])).map(function(req){
+      return {created_at:req.created_at, html:'<tr><td><span class="badge badge-purple">人事</span></td><td>'+(empMap[req.user_id]||'—')+'</td><td>'+escHtml(req.request_type)+'：'+escHtml(hrDetailsToText(req.request_type,req.details))+'</td><td>'+(req.created_at||'').slice(0,10)+'</td><td><button class="btn btn-sm btn-green" onclick="approveHr(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectHr(&quot;'+req.id+'&quot;)">却下</button></td></tr>'};
+    });
+    const allRows=leaveRows.concat(hrRows).sort(function(a,b){ return (b.created_at||'').localeCompare(a.created_at||''); }).slice(0,10);
+    if(!allRows.length){
       tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">未承認申請はありません</td></tr>';
       return;
     }
-    tbody.innerHTML=rs[0].data.map(function(req){
-      const name=empMap[req.user_id]||'—';
-      return '<tr><td><span class="badge badge-blue">休暇</span></td><td>'+name+'</td><td>'+req.leave_type+' '+req.start_date+'〜'+req.end_date+'</td><td>'+req.created_at.slice(0,10)+'</td><td><button class="btn btn-sm btn-green" onclick="approveLeave(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectLeave(&quot;'+req.id+'&quot;)">否認</button></td></tr>';
-    }).join('');
+    tbody.innerHTML=allRows.map(function(r){return r.html;}).join('');
   }).catch(function(){
     document.getElementById('dashApprovalTbl').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">—</td></tr>';
   });
@@ -3590,7 +3606,7 @@ window.actOnApproval = function(requestType, requestId, action, reloadFn){
 // 全申請種別の未承認件数を集計し、サイドバー・ダッシュボードに反映
 window.refreshPendingBadge = function(){
   if(!sb) return;
-  var tables = ['leave_requests','overtime_requests','shift_requests','shift_swap_requests','shift_wish_requests','side_job_requests'];
+  var tables = ['leave_requests','overtime_requests','shift_requests','shift_swap_requests','shift_wish_requests','side_job_requests','hr_requests'];
   Promise.all(
     tables.map(function(t){
       return sb.from(t).select('count',{count:'exact',head:true}).eq('status','pending').then(function(r){return r.error?0:(r.count||0);});
@@ -3673,7 +3689,7 @@ window.rejectSideJob = function(id){
 // ══════════════════════════════════════════════
 function loadApprovals(){
   loadLeaveApprovals(); loadOtApprovals(); loadPunchApprovals();
-  loadShiftApprovals(); loadSideJobApprovals();
+  loadHrApprovals(); loadShiftApprovals(); loadSideJobApprovals();
 }
 
 // ══════════════════════════════════════════════
@@ -4172,6 +4188,67 @@ window.rejectPunchCorrection = function(id){
     if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
     showToast('却下しました','amber');
     loadPunchApprovals();
+    refreshPendingBadge();
+  });
+};
+
+// ══════════════════════════════════════════════
+//  人事申請（住所変更・扶養家族変更・氏名変更・緊急連絡先変更・銀行口座変更・その他）
+// ══════════════════════════════════════════════
+function hrDetailsToText(type, details){
+  details = details || {};
+  if(type==='住所変更') return '新住所: '+(details.new_address||'')+(details.zip?'（〒'+details.zip+'）':'');
+  if(type==='扶養家族変更') return (details.action||'')+'：'+(details.name||'')+(details.relation?'（'+details.relation+'）':'')+(details.birth_date?' 生年月日:'+details.birth_date:'');
+  if(type==='氏名変更') return '新氏名: '+(details.new_name||'')+(details.new_name_kana?'（'+details.new_name_kana+'）':'');
+  if(type==='緊急連絡先変更') return (details.name||'')+(details.relation?'（'+details.relation+'）':'')+' '+(details.phone||'');
+  if(type==='銀行口座変更') return (details.bank_name||'')+' '+(details.branch_name||'')+' '+(details.account_type||'')+' '+(details.account_no||'')+' '+(details.account_holder||'');
+  if(type==='その他') return details.detail||'';
+  return JSON.stringify(details);
+}
+function loadHrApprovals(){
+  Promise.all([
+    sb.from('hr_requests').select('id,user_id,request_type,details,reason,created_at').eq('status','pending').order('created_at',{ascending:false}),
+    sb.from('employees').select('auth_id,name').eq('is_active',true)
+  ]).then(function(rs){
+    const tbody = document.getElementById('hrAppTbl');
+    if(!tbody) return;
+    if(rs[0].error){
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">hr_requestsテーブル未作成</td></tr>';
+      return;
+    }
+    if(!rs[0].data||!rs[0].data.length){
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">未承認申請なし</td></tr>';
+      return;
+    }
+    const empMap={};
+    (rs[1].data||[]).forEach(function(e){ empMap[e.auth_id]=e.name; });
+    tbody.innerHTML = rs[0].data.map(function(req){
+      return '<tr><td>'+(empMap[req.user_id]||'—')+'</td><td><span class="badge badge-purple">'+escHtml(req.request_type)+'</span></td>'
+        +'<td style="font-size:12px">'+escHtml(hrDetailsToText(req.request_type, req.details))+'</td>'
+        +'<td style="font-size:12px">'+escHtml(req.reason||'')+'</td><td>'+(req.created_at||'').slice(0,10)+'</td>'
+        +'<td><button class="btn btn-sm btn-green" onclick="approveHr(&quot;'+req.id+'&quot;)">承認</button> <button class="btn btn-sm btn-red" onclick="rejectHr(&quot;'+req.id+'&quot;)">却下</button></td></tr>';
+    }).join('');
+  });
+}
+window.approveHr = function(id){
+  sb.from('hr_requests').update({
+    status:'approved', reviewed_by:(myProfile&&myProfile.id)||null, reviewed_at:new Date().toISOString()
+  }).eq('id',id).then(function(r){
+    if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
+    showToast('✅ 人事申請を承認しました','green');
+    loadHrApprovals();
+    loadDashboard();
+    refreshPendingBadge();
+  });
+};
+window.rejectHr = function(id){
+  if(!confirm('この人事申請を却下しますか？')) return;
+  sb.from('hr_requests').update({
+    status:'rejected', reviewed_by:(myProfile&&myProfile.id)||null, reviewed_at:new Date().toISOString()
+  }).eq('id',id).then(function(r){
+    if(r.error){ showToast('エラー: '+r.error.message,'red'); return; }
+    showToast('却下しました','amber');
+    loadHrApprovals();
     refreshPendingBadge();
   });
 };

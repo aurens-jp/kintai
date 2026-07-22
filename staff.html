@@ -627,6 +627,16 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
     <div class="list-row" onclick="goScreen('screen-apply-hourly-leave')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-clock" style="color:var(--suc)"></i></div><div class="list-title" data-i18n="apply_type.hourly_leave">時間単位休暇</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
     <div class="list-row" onclick="goScreen('screen-apply-absence')"><div class="list-icon" style="background:var(--dan-l)"><i class="bi bi-calendar-x" style="color:var(--dan)"></i></div><div class="list-title" data-i18n="apply_type.absence">欠勤申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
     <div class="list-row" onclick="goScreen('screen-apply-late-early')"><div class="list-icon" style="background:var(--war-l)"><i class="bi bi-alarm" style="color:var(--war)"></i></div><div class="list-title" data-i18n="apply_type.late_early">遅刻・早退申請</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="goScreen('screen-apply-comp-holiday')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-calendar2-week" style="color:var(--suc)"></i></div><div class="list-title">休日申請（振替休日）</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+  </div>
+  <div class="sec-title">人事申請</div>
+  <div class="list-wrap">
+    <div class="list-row" onclick="openHrForm('住所変更')"><div class="list-icon" style="background:var(--pri-l)"><i class="bi bi-house" style="color:var(--pri)"></i></div><div class="list-title">住所変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('扶養家族変更')"><div class="list-icon" style="background:var(--pur-l)"><i class="bi bi-people" style="color:var(--pur)"></i></div><div class="list-title">扶養家族変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('氏名変更')"><div class="list-icon" style="background:#fef3c7"><i class="bi bi-person-badge" style="color:var(--war)"></i></div><div class="list-title">氏名変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('緊急連絡先変更')"><div class="list-icon" style="background:var(--dan-l)"><i class="bi bi-telephone" style="color:var(--dan)"></i></div><div class="list-title">緊急連絡先変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('銀行口座変更')"><div class="list-icon" style="background:#f0fdf4"><i class="bi bi-bank" style="color:var(--suc)"></i></div><div class="list-title">銀行口座変更</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
+    <div class="list-row" onclick="openHrForm('その他')"><div class="list-icon" style="background:#f1f5f9"><i class="bi bi-three-dots" style="color:var(--muted)"></i></div><div class="list-title">その他</div><i class="bi bi-chevron-right list-chev ms-auto"></i></div>
   </div>
   <div class="sec-title" data-i18n="apply_cat.other">その他申請</div>
   <div class="list-wrap">
@@ -862,6 +872,141 @@ select.f-ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xm
     </div>
     <div id="pcErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
     <button class="btn-app btn-pri" onclick="submitPunchCorrection()">申請する</button>
+  </div>
+</div>
+
+<!-- 休日申請（振替休日） -->
+<div class="pg" id="screen-apply-comp-holiday">
+  <div style="padding:0 16px">
+    <div class="card-app" style="background:#f0fdf4;border-color:#bbf7d0">
+      <div style="font-size:12px;color:var(--suc);font-weight:700">振替休日の取得を申請します（有給は消費しません）</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">振替休日を取得する日</label>
+      <input class="f-ctrl" type="date" id="chDate">
+    </div>
+    <div class="f-group">
+      <label class="f-label">出勤した休日（対象、任意）</label>
+      <input class="f-ctrl" type="date" id="chWorkedDate">
+    </div>
+    <div class="f-group">
+      <label class="f-label">理由</label>
+      <textarea class="f-ctrl" rows="2" id="chReason" placeholder="休日出勤の振替のため"></textarea>
+    </div>
+    <div id="chErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitCompHoliday()">申請する</button>
+  </div>
+</div>
+
+<!-- 人事申請フォーム -->
+<div class="pg" id="screen-apply-hr-form">
+  <div style="padding:0 16px">
+    <div class="card-app" id="hrFormBanner" style="background:var(--pri-l);border-color:var(--pri-l)">
+      <div style="font-size:13px;color:var(--pri);font-weight:700" id="hrFormTypeLabel">人事申請</div>
+    </div>
+
+    <!-- 住所変更 -->
+    <div class="hr-field-group" data-hr-type="住所変更" style="display:none">
+      <div class="f-group">
+        <label class="f-label">新しい郵便番号</label>
+        <input class="f-ctrl" type="text" id="hrAddrZip" placeholder="123-4567">
+      </div>
+      <div class="f-group">
+        <label class="f-label">新しい住所</label>
+        <textarea class="f-ctrl" rows="2" id="hrAddrNew" placeholder="○○県○○市○○1-2-3"></textarea>
+      </div>
+    </div>
+
+    <!-- 扶養家族変更 -->
+    <div class="hr-field-group" data-hr-type="扶養家族変更" style="display:none">
+      <div class="f-group">
+        <label class="f-label">変更内容</label>
+        <select class="f-ctrl" id="hrDepAction"><option>追加</option><option>削除</option><option>情報変更</option></select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">対象者氏名</label>
+        <input class="f-ctrl" type="text" id="hrDepName" placeholder="山田 花子">
+      </div>
+      <div class="f-group">
+        <label class="f-label">続柄</label>
+        <input class="f-ctrl" type="text" id="hrDepRelation" placeholder="配偶者・子 など">
+      </div>
+      <div class="f-group">
+        <label class="f-label">生年月日</label>
+        <input class="f-ctrl" type="date" id="hrDepBirth">
+      </div>
+    </div>
+
+    <!-- 氏名変更 -->
+    <div class="hr-field-group" data-hr-type="氏名変更" style="display:none">
+      <div class="f-group">
+        <label class="f-label">新しい氏名</label>
+        <input class="f-ctrl" type="text" id="hrNameNew" placeholder="山田 太郎">
+      </div>
+      <div class="f-group">
+        <label class="f-label">新しいフリガナ</label>
+        <input class="f-ctrl" type="text" id="hrNameKana" placeholder="ヤマダ タロウ">
+      </div>
+      <div class="f-group">
+        <label class="f-label">変更理由</label>
+        <input class="f-ctrl" type="text" id="hrNameReason" placeholder="婚姻のため など">
+      </div>
+    </div>
+
+    <!-- 緊急連絡先変更 -->
+    <div class="hr-field-group" data-hr-type="緊急連絡先変更" style="display:none">
+      <div class="f-group">
+        <label class="f-label">氏名</label>
+        <input class="f-ctrl" type="text" id="hrEcName" placeholder="山田 花子">
+      </div>
+      <div class="f-group">
+        <label class="f-label">続柄</label>
+        <input class="f-ctrl" type="text" id="hrEcRelation" placeholder="配偶者 など">
+      </div>
+      <div class="f-group">
+        <label class="f-label">電話番号</label>
+        <input class="f-ctrl" type="tel" id="hrEcPhone" placeholder="090-1234-5678">
+      </div>
+    </div>
+
+    <!-- 銀行口座変更 -->
+    <div class="hr-field-group" data-hr-type="銀行口座変更" style="display:none">
+      <div class="f-group">
+        <label class="f-label">銀行名</label>
+        <input class="f-ctrl" type="text" id="hrBankName" placeholder="○○銀行">
+      </div>
+      <div class="f-group">
+        <label class="f-label">支店名</label>
+        <input class="f-ctrl" type="text" id="hrBankBranch" placeholder="○○支店">
+      </div>
+      <div class="f-group">
+        <label class="f-label">口座種別</label>
+        <select class="f-ctrl" id="hrBankType"><option>普通</option><option>当座</option><option>貯蓄</option></select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">口座番号</label>
+        <input class="f-ctrl" type="text" id="hrBankNo" placeholder="1234567">
+      </div>
+      <div class="f-group">
+        <label class="f-label">口座名義（カタカナ）</label>
+        <input class="f-ctrl" type="text" id="hrBankHolder" placeholder="ヤマダ タロウ">
+      </div>
+    </div>
+
+    <!-- その他 -->
+    <div class="hr-field-group" data-hr-type="その他" style="display:none">
+      <div class="f-group">
+        <label class="f-label">内容</label>
+        <textarea class="f-ctrl" rows="3" id="hrOtherDetail" placeholder="申請内容をご記入ください"></textarea>
+      </div>
+    </div>
+
+    <div class="f-group">
+      <label class="f-label">備考・理由（任意）</label>
+      <textarea class="f-ctrl" rows="2" id="hrReason" placeholder=""></textarea>
+    </div>
+    <div id="hrErr" style="display:none;color:var(--dan);font-size:12px;margin-bottom:8px"></div>
+    <button class="btn-app btn-pri" onclick="submitHrRequest()">申請する</button>
   </div>
 </div>
 
@@ -1390,6 +1535,7 @@ var _titles = {
   'screen-apply-hourly-leave':'時間単位休暇申請','screen-apply-ot':'残業申請',
   'screen-apply-holiday-work':'休日出勤申請','screen-apply-absence':'欠勤申請',
   'screen-apply-late-early':'遅刻・早退申請','screen-apply-punch':'打刻修正申請',
+  'screen-apply-comp-holiday':'休日申請（振替休日）','screen-apply-hr-form':'人事申請',
   'screen-apply-shift-wish':'シフト・休暇希望申請','screen-apply-shift-change':'シフト変更申請','screen-apply-shift-swap':'シフト交換申請','screen-apply-detail':'申請詳細',
   'screen-approval-status':'承認状況',
   'screen-notice':'お知らせ','screen-notice-detail':'お知らせ詳細','screen-notice-post':'お知らせ投稿',
@@ -1720,6 +1866,94 @@ async function submitPunchCorrection(){
   var {error} = await sb.from('punch_records').insert(payload);
   if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
   showToast('打刻修正を申請しました');
+  goScreen('screen-apply');
+}
+
+// ── 休日申請（振替休日、leave_requestsに leave_type:'振替休日' として登録）──
+async function submitCompHoliday(){
+  var date = (document.getElementById('chDate')||{}).value;
+  var worked = (document.getElementById('chWorkedDate')||{}).value;
+  var reason = (document.getElementById('chReason')||{}).value;
+  var errEl = document.getElementById('chErr');
+  if(errEl) errEl.style.display='none';
+  if(!date){ if(errEl){errEl.textContent='取得する日を入力してください';errEl.style.display='';} return; }
+  var reasonText = (worked?('出勤した休日:'+worked+'　'):'')+(reason||'');
+  var payload = {
+    user_id: _myAuthId,
+    leave_type: '振替休日',
+    start_date: date, end_date: date,
+    reason: reasonText||null, status: 'pending',
+    unit: 'day'
+  };
+  var {error} = await sb.from('leave_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('休日申請（振替休日）を送信しました');
+  goScreen('screen-apply');
+}
+
+// ── 人事申請（住所変更・扶養家族変更・氏名変更・緊急連絡先変更・銀行口座変更・その他）──
+var _hrReqType = null;
+function openHrForm(type){
+  _hrReqType = type;
+  var label = document.getElementById('hrFormTypeLabel');
+  if(label) label.textContent = '人事申請：'+type;
+  document.querySelectorAll('.hr-field-group').forEach(function(g){
+    g.style.display = (g.getAttribute('data-hr-type')===type) ? '' : 'none';
+  });
+  var errEl = document.getElementById('hrErr');
+  if(errEl) errEl.style.display='none';
+  goScreen('screen-apply-hr-form');
+}
+async function submitHrRequest(){
+  var errEl = document.getElementById('hrErr');
+  if(errEl) errEl.style.display='none';
+  if(!_hrReqType){ return; }
+  var details = {};
+  var ok = true;
+  var errMsg = '';
+  if(_hrReqType==='住所変更'){
+    details.zip = (document.getElementById('hrAddrZip')||{}).value||'';
+    details.new_address = (document.getElementById('hrAddrNew')||{}).value||'';
+    if(!details.new_address){ ok=false; errMsg='新しい住所を入力してください'; }
+  } else if(_hrReqType==='扶養家族変更'){
+    details.action = (document.getElementById('hrDepAction')||{}).value||'';
+    details.name = (document.getElementById('hrDepName')||{}).value||'';
+    details.relation = (document.getElementById('hrDepRelation')||{}).value||'';
+    details.birth_date = (document.getElementById('hrDepBirth')||{}).value||'';
+    if(!details.name){ ok=false; errMsg='対象者氏名を入力してください'; }
+  } else if(_hrReqType==='氏名変更'){
+    details.new_name = (document.getElementById('hrNameNew')||{}).value||'';
+    details.new_name_kana = (document.getElementById('hrNameKana')||{}).value||'';
+    details.change_reason = (document.getElementById('hrNameReason')||{}).value||'';
+    if(!details.new_name){ ok=false; errMsg='新しい氏名を入力してください'; }
+  } else if(_hrReqType==='緊急連絡先変更'){
+    details.name = (document.getElementById('hrEcName')||{}).value||'';
+    details.relation = (document.getElementById('hrEcRelation')||{}).value||'';
+    details.phone = (document.getElementById('hrEcPhone')||{}).value||'';
+    if(!details.name||!details.phone){ ok=false; errMsg='氏名と電話番号を入力してください'; }
+  } else if(_hrReqType==='銀行口座変更'){
+    details.bank_name = (document.getElementById('hrBankName')||{}).value||'';
+    details.branch_name = (document.getElementById('hrBankBranch')||{}).value||'';
+    details.account_type = (document.getElementById('hrBankType')||{}).value||'';
+    details.account_no = (document.getElementById('hrBankNo')||{}).value||'';
+    details.account_holder = (document.getElementById('hrBankHolder')||{}).value||'';
+    if(!details.bank_name||!details.account_no){ ok=false; errMsg='銀行名と口座番号を入力してください'; }
+  } else if(_hrReqType==='その他'){
+    details.detail = (document.getElementById('hrOtherDetail')||{}).value||'';
+    if(!details.detail){ ok=false; errMsg='内容を入力してください'; }
+  }
+  if(!ok){ if(errEl){errEl.textContent=errMsg;errEl.style.display='';} return; }
+  var reason = (document.getElementById('hrReason')||{}).value||null;
+  var payload = {
+    user_id: _myAuthId,
+    request_type: _hrReqType,
+    details: details,
+    reason: reason,
+    status: 'pending'
+  };
+  var {error} = await sb.from('hr_requests').insert(payload);
+  if(error){ if(errEl){errEl.textContent='送信エラー: '+error.message;errEl.style.display='';} return; }
+  showToast('人事申請（'+_hrReqType+'）を送信しました');
   goScreen('screen-apply');
 }
 
